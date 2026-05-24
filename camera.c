@@ -6,14 +6,14 @@
 #define height 300
 CAM cameraPos = { '\0', '\0', '\0', '\0' };
 
-void updateCamera(int x, int y) {
+void updateCamera(float x, float y) {
 	cameraPos.x = x - (width * 0.5);
 	cameraPos.y = y - (height * 0.5);
 	cameraPos.w = width;
 	cameraPos.h = height;
 }
 
-SDL_FRect worldEntity2Screen(SDL_Window *win, int x, int y, int w, int h) {
+SDL_FRect worldEntity2Screen(SDL_Window *win, float x, float y, float w, float h) {
 	SDL_FRect r = { -1, -1, -1, -1 };
 	if (cameraPos.x == '\0' || cameraPos.y == '\0' || cameraPos.w == '\0' || cameraPos.h == '\0')
 		return r;
