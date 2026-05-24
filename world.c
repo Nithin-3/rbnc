@@ -9,7 +9,6 @@ void insertEntity(int x, int y, Entity e) {
 	if (x < 0 || x >= ENTITY_LEN || y < 0 || y >= ENTITY_LEN)
 		return;
 	Entity *en = malloc(sizeof(Entity));
-	en->r = e.r;
 	en->color = e.color;
 	ent[x][y] = en;
 }
