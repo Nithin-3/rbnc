@@ -9,6 +9,6 @@ typedef struct {
 
 extern CAM cameraPos;
 
-void updateCamera(int x, int y);
-SDL_FRect worldEntity2Screen(SDL_Window *win, int x, int y, int w, int h);
+void updateCamera(float x, float y);
+SDL_FRect worldEntity2Screen(SDL_Window *win, float x, float y, float w,float h);
 #endif
