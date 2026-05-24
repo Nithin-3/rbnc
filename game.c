@@ -1,5 +1,6 @@
 #include "world.h"
 #include "render.h"
+#include "player.h"
 #include <SDL3/SDL.h>
 
 int main(int argc, char *argv[]) {
@@ -20,6 +21,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
+	initPlayer(3, 3, 0xFFFFFFFF);
 
 	Uint64 prev = SDL_GetTicks();
 	SDL_Event e;
@@ -34,7 +36,7 @@ int main(int argc, char *argv[]) {
 				running = 0;
 		}
 
-		SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 		SDL_RenderClear(renderer);
 		render(window, renderer);
 		SDL_RenderPresent(renderer);
