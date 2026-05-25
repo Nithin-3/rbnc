@@ -2,8 +2,8 @@
 #include "camera.h"
 #include <stdio.h>
 
-#define width 500
-#define height 300
+#define width 640
+#define height 360
 CAM cameraPos = { '\0', '\0', '\0', '\0' };
 
 void updateCamera(float x, float y) {
