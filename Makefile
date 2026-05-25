@@ -1,26 +1,31 @@
 CFLAGS := $(shell pkg-config --cflags sdl3)
 LDFLAGS := $(shell pkg-config --libs sdl3) -lm
+OBJDIR := out
 
-game: game.o world.o player.o camera.o render.o object.o
-	$(CC) -o $@ $^ $(LDFLAGS)
+game: $(OBJDIR)/game.o $(OBJDIR)/world.o $(OBJDIR)/player.o \
+      $(OBJDIR)/camera.o $(OBJDIR)/render.o $(OBJDIR)/object.o
+	$(CC) -o $(OBJDIR)/$@ $^ $(LDFLAGS)
 
-game.o: game.c world.h render.h player.h camera.h
+$(OBJDIR)/game.o: game.c world.h render.h player.h camera.h | $(OBJDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-world.o: world.c world.h
+$(OBJDIR)/world.o: world.c world.h | $(OBJDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-player.o: player.c player.h world.h
+$(OBJDIR)/player.o: player.c player.h world.h | $(OBJDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-camera.o: camera.c camera.h
+$(OBJDIR)/camera.o: camera.c camera.h | $(OBJDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-render.o: render.c render.h world.h camera.h
+$(OBJDIR)/render.o: render.c render.h world.h camera.h | $(OBJDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-object.o: object.c object.h
+$(OBJDIR)/object.o: object.c object.h | $(OBJDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
 
 clean:
-	rm -f *.o game
+	rm -rf $(OBJDIR)
