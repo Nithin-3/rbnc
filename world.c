@@ -20,15 +20,15 @@ void freeEntity(int x, int y) {
 	ent[x][y] = NULL;
 }
 
-void insertPlayer(Player p) {
+void insertPlayer(Player *p) {
 	for (int i = 0; i < PLAYER_LEN; i++) {
 		if (player[i] != NULL)
 			continue;
 		Player *pl = malloc(sizeof(Player));
-		pl->x = p.x;
-		pl->y = p.y;
-		pl->r = p.r;
-		pl->color = p.color;
+		pl->x = p->x;
+		pl->y = p->y;
+		pl->r = p->r;
+		pl->color = p->color;
 		pl->index = i;
 		player[i] = pl;
 		return;
