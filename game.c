@@ -1,6 +1,7 @@
 #include "world.h"
 #include "render.h"
 #include "player.h"
+#include "camera.h"
 #include <SDL3/SDL.h>
 
 int main(int argc, char *argv[]) {
@@ -22,6 +23,11 @@ int main(int argc, char *argv[]) {
 	}
 
 	initPlayer(-10, 3, 0x00FF00FF);
+	{
+		int w, h;
+		SDL_GetWindowSize(window, &w, &h);
+		cameraSetWindowSize(w, h);
+	}
 
 	Uint64 prev = SDL_GetTicks();
 	SDL_Event e;
@@ -34,6 +40,9 @@ int main(int argc, char *argv[]) {
 		while (SDL_PollEvent(&e)) {
 			if (e.type == SDL_EVENT_QUIT)
 				running = 0;
+			if (e.type == SDL_EVENT_WINDOW_RESIZED) {
+				cameraSetWindowSize(e.window.data1, e.window.data2);
+			}
 		}
 
 		const bool *keys = SDL_GetKeyboardState(NULL);

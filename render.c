@@ -14,7 +14,7 @@ void render(SDL_Window *window, SDL_Renderer *renderer) {
 			continue;
 		Player *p = player[i];
 		if (p->x >= cameraPos.x && p->x < cameraPos.x + cameraPos.w && p->y >= cameraPos.y && p->y < cameraPos.y + cameraPos.h) {
-			SDL_FRect r = worldEntity2Screen(window, (int)(p->x - p->r), (int)(p->y - p->r), p->r * 2, p->r * 2);
+			SDL_FRect r = worldEntity2Screen((int)(p->x - p->r), (int)(p->y - p->r), p->r * 2, p->r * 2);
 			struct center c = { .x = r.x + r.w / 2, .y = r.y + r.h / 2 };
 			circle(renderer, c, (int)(r.w / 2), 1, 0, p->color);
 		}
@@ -30,7 +30,7 @@ void render(SDL_Window *window, SDL_Renderer *renderer) {
 		for (int y = sy; y < ey; y++) {
 			if (ent[x][y] != NULL) {
 				Entity *e = ent[x][y];
-				SDL_FRect r = worldEntity2Screen(window, x - 5, y - 5, 10, 10);
+				SDL_FRect r = worldEntity2Screen(x - 5, y - 5, 10, 10);
 				struct center c = { .x = r.x + r.w / 2, .y = r.y + r.h / 2 };
 				circle(renderer, c, (int)(r.w / 2), 1, 0, e->color);
 			}

@@ -4,7 +4,7 @@
 
 #define width 640
 #define height 360
-CAM cameraPos = { '\0', '\0', '\0', '\0' };
+CAM cameraPos = { '\0', '\0', '\0', '\0', 0, 0 };
 
 void updateCamera(float x, float y) {
 	cameraPos.x = x - (width * 0.5);
@@ -13,17 +13,16 @@ void updateCamera(float x, float y) {
 	cameraPos.h = height;
 }
 
-SDL_FRect worldEntity2Screen(SDL_Window *win, float x, float y, float w, float h) {
+void cameraSetWindowSize(int w, int h) {
+	cameraPos.winW = w;
+	cameraPos.winH = h;
+}
+
+SDL_FRect worldEntity2Screen(float x, float y, float w, float h) {
 	SDL_FRect r = { -1, -1, -1, -1 };
 	if (cameraPos.x == '\0' || cameraPos.y == '\0' || cameraPos.w == '\0' || cameraPos.h == '\0')
 		return r;
-	int wid, hei;
-	if (!SDL_GetWindowSize(win, &wid, &hei)) {
-		printf("SDL_GetCurrentDisplayMode Error: %s\n", SDL_GetError());
-		SDL_Quit();
-		return r;
-	}
-	float sX = (float)wid / width, sY = (float)hei / height;
+	float sX = (float)cameraPos.winW / width, sY = (float)cameraPos.winH / height;
 	float scale = sX > sY ? sY : sX;
 
 	r.x = (x - cameraPos.x) * scale;
