@@ -8,6 +8,10 @@ struct center {
 	float x, y;
 };
 
-void circle(SDL_Renderer *renderer, struct center c, int radius, int innerfill, int thickness, uint32_t color);
+#define CIRCLE_CACHE_SIZE 10
+
+void circle_player(SDL_Renderer *renderer, struct center c, int radius, uint32_t color);
+void circle_entity(SDL_Renderer *renderer, struct center c, int radius, uint32_t color);
+void circle_cache_destroy(void);
 
 #endif

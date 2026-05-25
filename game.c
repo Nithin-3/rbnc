@@ -2,6 +2,7 @@
 #include "render.h"
 #include "player.h"
 #include "camera.h"
+#include "object.h"
 #include <SDL3/SDL.h>
 
 int main(int argc, char *argv[]) {
@@ -64,6 +65,7 @@ int main(int argc, char *argv[]) {
 		SDL_RenderPresent(renderer);
 	}
 
+	circle_cache_destroy();
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
