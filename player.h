@@ -4,5 +4,6 @@
 #include <stdint.h>
 
 void initPlayer(float x, float y, uint32_t color);
+void updatePlayer(float dirX, float dirY);
 
 #endif

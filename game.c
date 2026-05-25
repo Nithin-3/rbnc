@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	initPlayer(3, 3, 0xFFFFFFFF);
+	initPlayer(-10, 3, 0x00FF00FF);
 
 	Uint64 prev = SDL_GetTicks();
 	SDL_Event e;
@@ -36,6 +36,19 @@ int main(int argc, char *argv[]) {
 				running = 0;
 		}
 
+		const bool *keys = SDL_GetKeyboardState(NULL);
+		float dirX = 0, dirY = 0;
+
+		if (keys[SDL_SCANCODE_W])
+			dirY -= 1;
+		if (keys[SDL_SCANCODE_S])
+			dirY += 1;
+		if (keys[SDL_SCANCODE_A])
+			dirX -= 1;
+		if (keys[SDL_SCANCODE_D])
+			dirX += 1;
+
+		updatePlayer(dirX, dirY);
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 		SDL_RenderClear(renderer);
 		render(window, renderer);
