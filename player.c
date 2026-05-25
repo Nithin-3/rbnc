@@ -5,6 +5,7 @@
 #define speed 100
 
 static int plIndx = -1;
+
 void initPlayer(float x, float y, uint32_t color) {
 	static int pl = 0;
 	if (pl)
@@ -12,7 +13,7 @@ void initPlayer(float x, float y, uint32_t color) {
 	Player p = {
 		.x = x,
 		.y = y,
-		.r = 33,
+		.r = 100,
 		.color = color,
 	};
 	insertPlayer(&p);
@@ -29,5 +30,8 @@ void updatePlayer(float dirX, float dirY) {
 		return;
 	player[plIndx]->x += (dirX / len) * speed * dt,
 	    player[plIndx]->y += (dirY / len) * speed * dt;
+
+	Entity e = { .color = player[plIndx]->color, .x = player[plIndx]->x, .y = player[plIndx]->y };
+	insertEntity(e);
 	updateCamera(player[plIndx]->x, player[plIndx]->y);
 }

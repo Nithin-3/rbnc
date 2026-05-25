@@ -5,8 +5,10 @@
 #define ENTITY_LEN 1000
 #define PLAYER_LEN 10
 
-typedef struct {
+typedef struct Entity{
+	float x, y;
 	uint32_t color;
+	struct Entity *next;
 } Entity;
 
 typedef struct {
@@ -15,12 +17,12 @@ typedef struct {
 	uint32_t color;
 } Player;
 
-extern Entity *ent[ENTITY_LEN][ENTITY_LEN];
 extern Player *player[PLAYER_LEN];
+extern Entity *entityHead[PLAYER_LEN];
 extern float dt;
 
-void insertEntity(int x, int y, Entity e);
-void freeEntity(int x, int y);
+void insertEntity(Entity e);
+void freeEntity(Entity e);
 void insertPlayer(Player *p);
 void freePlayer(int index);
 

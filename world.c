@@ -1,23 +1,37 @@
 #include "world.h"
 #include <stdlib.h>
 
-Entity *ent[ENTITY_LEN][ENTITY_LEN];
 Player *player[PLAYER_LEN];
+Entity *entityHead[PLAYER_LEN] = { 0 };
 float dt;
 
-void insertEntity(int x, int y, Entity e) {
-	if (x < 0 || x >= ENTITY_LEN || y < 0 || y >= ENTITY_LEN)
-		return;
-	Entity *en = malloc(sizeof(Entity));
-	en->color = e.color;
-	ent[x][y] = en;
+void insertEntity(Entity e) {
+	for (int i = 0; i < PLAYER_LEN; i++) {
+		if (!entityHead[i] || entityHead[i]->color == e.color) {
+			Entity *en = malloc(sizeof(Entity));
+			en->x = e.x;
+			en->y = e.y;
+			en->color = e.color;
+			en->next = entityHead[i];
+			entityHead[i] = en;
+			return;
+		}
+	}
 }
 
-void freeEntity(int x, int y) {
-	if (x < 0 || x >= ENTITY_LEN || y < 0 || y >= ENTITY_LEN)
-		return;
-	free(ent[x][y]);
-	ent[x][y] = NULL;
+void freeEntity(Entity e) {
+	for (int i = 0; i < PLAYER_LEN; i++) {
+		Entity **pp = &entityHead[i];
+		while (*pp) {
+			if ((int)(*pp)->x == (int)e.x && (int)(*pp)->y == (int)e.y) {
+				Entity *tmp = *pp;
+				*pp = (*pp)->next;
+				free(tmp);
+				return;
+			}
+			pp = &(*pp)->next;
+		}
+	}
 }
 
 void insertPlayer(Player *p) {

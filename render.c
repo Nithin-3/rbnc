@@ -20,20 +20,18 @@ void render(SDL_Window *window, SDL_Renderer *renderer) {
 		}
 	}
 
-	int sx = cameraPos.x < 0 ? 0 : (int)cameraPos.x;
-	int sy = cameraPos.y < 0 ? 0 : (int)cameraPos.y;
-	int ex = cameraPos.x + cameraPos.w > ENTITY_LEN
-		? ENTITY_LEN : (int)(cameraPos.x + cameraPos.w);
-	int ey = cameraPos.y + cameraPos.h > ENTITY_LEN
-		? ENTITY_LEN : (int)(cameraPos.y + cameraPos.h);
-	for (int x = sx; x < ex; x++) {
-		for (int y = sy; y < ey; y++) {
-			if (ent[x][y] != NULL) {
-				Entity *e = ent[x][y];
-				SDL_FRect r = worldEntity2Screen(x - 5, y - 5, 10, 10);
+	
+	for (int i = 0; i < PLAYER_LEN; i++) {
+		if (!entityHead[i]) break;
+		Entity *head = entityHead[i];
+		while (head) {
+			if (head->x >= cameraPos.x && head->x < cameraPos.x + cameraPos.w && head->y >= cameraPos.y && head->y < cameraPos.y + cameraPos.h) {
+				SDL_FRect r = worldEntity2Screen(head->x - 5, head->y - 5, 10, 10);
 				struct center c = { .x = r.x + r.w / 2, .y = r.y + r.h / 2 };
-				circle_entity(renderer, c, 33, e->color);
+				circle_entity(renderer, c, 3, head->color);
 			}
+			head = head->next;
 		}
 	}
+
 }
