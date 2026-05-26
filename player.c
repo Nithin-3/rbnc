@@ -1,6 +1,7 @@
 #include "camera.h"
 #include "player.h"
 #include "world.h"
+#include "ws.h"
 #include <math.h>
 #define speed 100
 
@@ -31,7 +32,12 @@ void updatePlayer(float dirX, float dirY) {
 	player[plIndx]->x += (dirX / len) * speed * dt,
 	    player[plIndx]->y += (dirY / len) * speed * dt;
 
-	Entity e = { .color = player[plIndx]->color, .x = player[plIndx]->x, .y = player[plIndx]->y };
-	insertEntity(e);
+	playerEvent evt = {
+		.x = player[plIndx]->x,
+		.y = player[plIndx]->y,
+		.color = player[plIndx]->color,
+		.type = 0,
+	};
+	sendMsg(&evt);
 	updateCamera(player[plIndx]->x, player[plIndx]->y);
 }

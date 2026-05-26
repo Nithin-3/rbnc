@@ -73,9 +73,9 @@ int main(int argc, char *argv[]) {
 		render(window, renderer);
 		SDL_RenderPresent(renderer);
 
-		float fps = 1.0f / dt;
-
-		fprintf(stdout,"\rFPS:\t%.2f", fps);
+		// float fps = 1.0f / dt;
+		//
+		// fprintf(stdout,"\rFPS:\t%.2f", fps);
 	}
 
 	circle_cache_destroy();
