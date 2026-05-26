@@ -2,9 +2,9 @@
 #include <math.h>
 
 struct CacheEntry {
-	uint32_t color;
-	int radius;
 	SDL_Texture *texture;
+	int radius;
+	uint32_t color;
 };
 
 static struct CacheEntry player_cache[CIRCLE_CACHE_SIZE];

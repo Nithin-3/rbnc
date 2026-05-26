@@ -5,7 +5,7 @@
 #define ENTITY_LEN 1000
 #define PLAYER_LEN 10
 
-typedef struct Entity{
+typedef struct Entity {
 	float x, y;
 	uint32_t color;
 	struct Entity *next;

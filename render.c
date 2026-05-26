@@ -20,9 +20,9 @@ void render(SDL_Window *window, SDL_Renderer *renderer) {
 		}
 	}
 
-	
 	for (int i = 0; i < PLAYER_LEN; i++) {
-		if (!entityHead[i]) break;
+		if (!entityHead[i])
+			break;
 		Entity *head = entityHead[i];
 		while (head) {
 			if (head->x >= cameraPos.x && head->x < cameraPos.x + cameraPos.w && head->y >= cameraPos.y && head->y < cameraPos.y + cameraPos.h) {
@@ -33,5 +33,4 @@ void render(SDL_Window *window, SDL_Renderer *renderer) {
 			head = head->next;
 		}
 	}
-
 }
