@@ -29,3 +29,10 @@ $(OBJDIR):
 
 clean:
 	rm -rf $(OBJDIR)
+
+format:
+	find -name "*.[ch]" | xargs clang-format -i
+
+check-format:
+	find -name "*.[ch]" | xargs clang-format --dry-run --Werror
+

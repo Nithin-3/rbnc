@@ -4,6 +4,9 @@
 #include "camera.h"
 #include "object.h"
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_render.h>
+#include <SDL3/SDL_scancode.h>
+#include <stdio.h>
 
 int main(int argc, char *argv[]) {
 	SDL_Init(SDL_INIT_VIDEO);
@@ -16,6 +19,9 @@ int main(int argc, char *argv[]) {
 	}
 
 	SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL);
+	if (!SDL_SetRenderVSync(renderer, -1)) {
+		SDL_SetRenderVSync(renderer, 1);
+	}
 	if (!renderer) {
 		SDL_Log("SDL_CreateRenderer failed: %s", SDL_GetError());
 		SDL_DestroyWindow(window);
@@ -49,13 +55,13 @@ int main(int argc, char *argv[]) {
 		const bool *keys = SDL_GetKeyboardState(NULL);
 		float dirX = 0, dirY = 0;
 
-		if (keys[SDL_SCANCODE_W])
+		if (keys[SDL_SCANCODE_W] || keys[SDL_SCANCODE_UP])
 			dirY -= 1;
-		if (keys[SDL_SCANCODE_S])
+		if (keys[SDL_SCANCODE_S] || keys[SDL_SCANCODE_DOWN])
 			dirY += 1;
-		if (keys[SDL_SCANCODE_A])
+		if (keys[SDL_SCANCODE_A] || keys[SDL_SCANCODE_LEFT])
 			dirX -= 1;
-		if (keys[SDL_SCANCODE_D])
+		if (keys[SDL_SCANCODE_D] || keys[SDL_SCANCODE_RIGHT])
 			dirX += 1;
 
 		updatePlayer(dirX, dirY);
@@ -63,6 +69,10 @@ int main(int argc, char *argv[]) {
 		SDL_RenderClear(renderer);
 		render(window, renderer);
 		SDL_RenderPresent(renderer);
+
+		float fps = 1.0f / dt;
+
+		printf("\rFPS: %.2f", fps);
 	}
 
 	circle_cache_destroy();
