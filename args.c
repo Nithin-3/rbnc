@@ -8,7 +8,7 @@ const char *port;
 const char *name;
 
 static void usage(char *argv[]) {
-	fprintf(stderr, "usage: %s -u <url> -p <port> -n <name>\n",argv[0]);
+	fprintf(stderr, "usage: %s -u <url> -p <port> -n <name>\n", argv[0]);
 }
 
 void parseArgs(int argc, char *argv[]) {

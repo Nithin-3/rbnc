@@ -1,5 +1,5 @@
 CFLAGS := $(shell pkg-config --cflags sdl3)
-LDFLAGS := $(shell pkg-config --libs sdl3) -lm -lwebsockets
+LDFLAGS := $(shell pkg-config --libs sdl3) -lm -lwebsockets -lpthread
 OBJDIR := out
 
 game: $(OBJDIR)/game.o $(OBJDIR)/world.o $(OBJDIR)/player.o \

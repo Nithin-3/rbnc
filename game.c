@@ -10,7 +10,8 @@
 
 int main(int argc, char *argv[]) {
 	parseArgs(argc, argv);
-	ws_init();
+	wsInit();
+	wsServiceLoop();
 	SDL_Init(SDL_INIT_VIDEO);
 
 	SDL_Window *window = SDL_CreateWindow("rbnc", 0, 0, SDL_WINDOW_FULLSCREEN);
@@ -66,7 +67,6 @@ int main(int argc, char *argv[]) {
 		if (keys[SDL_SCANCODE_D] || keys[SDL_SCANCODE_RIGHT])
 			dirX += 1;
 
-		ws_service();
 		updatePlayer(dirX, dirY);
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 		SDL_RenderClear(renderer);
@@ -75,10 +75,11 @@ int main(int argc, char *argv[]) {
 
 		float fps = 1.0f / dt;
 
-		printf("\rFPS: %.2f", fps);
+		printf("\rFPS:\t%.2f", fps);
 	}
 
 	circle_cache_destroy();
+	wsStop();
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
