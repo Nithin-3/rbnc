@@ -1,6 +1,5 @@
 
 #include "camera.h"
-#include <stdio.h>
 
 #define width 640
 #define height 360

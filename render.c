@@ -1,7 +1,7 @@
-#include "render.h"
-#include "object.h"
-#include "world.h"
 #include "camera.h"
+#include "object.h"
+#include "render.h"
+#include "world.h"
 #include <stdlib.h>
 
 void render(SDL_Window *window, SDL_Renderer *renderer) {

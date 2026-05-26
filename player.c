@@ -1,5 +1,5 @@
-#include "player.h"
 #include "camera.h"
+#include "player.h"
 #include "world.h"
 #include <math.h>
 #define speed 100

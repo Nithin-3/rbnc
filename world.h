@@ -7,8 +7,8 @@
 
 typedef struct Entity {
 	float x, y;
-	uint32_t color;
 	struct Entity *next;
+	uint32_t color;
 } Entity;
 
 typedef struct {

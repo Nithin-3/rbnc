@@ -1,11 +1,10 @@
-#include "world.h"
-#include "render.h"
-#include "player.h"
+#include "args.h"
 #include "camera.h"
 #include "object.h"
+#include "player.h"
+#include "render.h"
+#include "world.h"
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_render.h>
-#include <SDL3/SDL_scancode.h>
 #include <stdio.h>
 
 int main(int argc, char *argv[]) {
