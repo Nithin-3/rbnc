@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
 
 		float fps = 1.0f / dt;
 
-		printf("\rFPS:\t%.2f", fps);
+		fprintf(stdout,"\rFPS:\t%.2f", fps);
 	}
 
 	circle_cache_destroy();
