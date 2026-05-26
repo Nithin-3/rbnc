@@ -3,7 +3,8 @@ LDFLAGS := $(shell pkg-config --libs sdl3) -lm
 OBJDIR := out
 
 game: $(OBJDIR)/game.o $(OBJDIR)/world.o $(OBJDIR)/player.o \
-      $(OBJDIR)/camera.o $(OBJDIR)/render.o $(OBJDIR)/object.o
+      $(OBJDIR)/camera.o $(OBJDIR)/render.o $(OBJDIR)/object.o \
+      $(OBJDIR)/args.o
 	$(CC) -o $(OBJDIR)/$@ $^ $(LDFLAGS)
 
 $(OBJDIR)/game.o: game.c world.h render.h player.h camera.h | $(OBJDIR)
@@ -22,6 +23,9 @@ $(OBJDIR)/render.o: render.c render.h world.h camera.h | $(OBJDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(OBJDIR)/object.o: object.c object.h | $(OBJDIR)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(OBJDIR)/args.o: args.c args.h | $(OBJDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(OBJDIR):

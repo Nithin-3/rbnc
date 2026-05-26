@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 int main(int argc, char *argv[]) {
+	parseArgs(argc, argv);
 	SDL_Init(SDL_INIT_VIDEO);
 
 	SDL_Window *window = SDL_CreateWindow("rbnc", 0, 0, SDL_WINDOW_FULLSCREEN);
