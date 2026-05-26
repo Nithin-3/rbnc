@@ -1,5 +1,6 @@
 #include "args.h"
 #include "camera.h"
+#include "ws.h"
 #include "object.h"
 #include "player.h"
 #include "render.h"
@@ -9,6 +10,7 @@
 
 int main(int argc, char *argv[]) {
 	parseArgs(argc, argv);
+	ws_init();
 	SDL_Init(SDL_INIT_VIDEO);
 
 	SDL_Window *window = SDL_CreateWindow("rbnc", 0, 0, SDL_WINDOW_FULLSCREEN);
@@ -64,6 +66,7 @@ int main(int argc, char *argv[]) {
 		if (keys[SDL_SCANCODE_D] || keys[SDL_SCANCODE_RIGHT])
 			dirX += 1;
 
+		ws_service();
 		updatePlayer(dirX, dirY);
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 		SDL_RenderClear(renderer);
