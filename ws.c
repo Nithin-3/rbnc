@@ -12,9 +12,9 @@
 #define MAX_QUEUE 500
 
 typedef struct {
-	playerEvent queue[MAX_QUEUE];
 	int head;
 	int tail;
+	playerEvent queue[MAX_QUEUE];
 	struct lws *wsi;
 } wsClient;
 
