@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 Player *player[PLAYER_LEN];
-Entity *entityHead[PLAYER_LEN] = { 0 };
+Entity *entityHead[PLAYER_LEN] = { 0 }, *entityTail[PLAYER_LEN] = { 0 };
 float dt;
 
 void insertEntity(Entity e) {
@@ -12,8 +12,25 @@ void insertEntity(Entity e) {
 			en->x = e.x;
 			en->y = e.y;
 			en->color = e.color;
-			en->next = entityHead[i];
-			entityHead[i] = en;
+
+			Entity *prev = NULL, *cur = entityHead[i];
+			while (cur) {
+				if ((int)cur->x == (int)e.x && (int)cur->y == (int)e.y) {
+					free(en);
+					return;
+				}
+				if (cur->x > e.x || (cur->x == e.x && cur->y > e.y))
+					break;
+				prev = cur;
+				cur = cur->next;
+			}
+			en->next = cur;
+			if (prev)
+				prev->next = en;
+			else
+				entityHead[i] = en;
+			if (!cur)
+				entityTail[i] = en;
 			return;
 		}
 	}
@@ -21,15 +38,20 @@ void insertEntity(Entity e) {
 
 void freeEntity(Entity e) {
 	for (int i = 0; i < PLAYER_LEN; i++) {
-		Entity **pp = &entityHead[i];
-		while (*pp) {
-			if ((int)(*pp)->x == (int)e.x && (int)(*pp)->y == (int)e.y) {
-				Entity *tmp = *pp;
-				*pp = (*pp)->next;
-				free(tmp);
+		Entity *prev = NULL, *cur = entityHead[i];
+		while (cur) {
+			if ((int)cur->x == (int)e.x && (int)cur->y == (int)e.y) {
+				if (prev)
+					prev->next = cur->next;
+				else
+					entityHead[i] = cur->next;
+				if (cur == entityTail[i])
+					entityTail[i] = prev;
+				free(cur);
 				return;
 			}
-			pp = &(*pp)->next;
+			prev = cur;
+			cur = cur->next;
 		}
 	}
 }

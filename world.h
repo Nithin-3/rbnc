@@ -18,7 +18,7 @@ typedef struct {
 } Player;
 
 extern Player *player[PLAYER_LEN];
-extern Entity *entityHead[PLAYER_LEN];
+extern Entity *entityHead[PLAYER_LEN], *entityTail[PLAYER_LEN];
 extern float dt;
 
 void insertEntity(Entity e);
