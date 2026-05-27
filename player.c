@@ -29,15 +29,15 @@ void updatePlayer(float dirX, float dirY) {
 	float len = sqrt(dirX * dirX + dirY * dirY);
 	if (len <= 0)
 		return;
-	player[plIndx]->x += (dirX / len) * speed * dt,
-	    player[plIndx]->y += (dirY / len) * speed * dt;
+	int x = player[plIndx]->x = (dirX / len) * speed * dt,
+	    y = player[plIndx]->y = (dirY / len) * speed * dt;
 
 	playerEvent evt = {
-		.x = player[plIndx]->x,
-		.y = player[plIndx]->y,
+		.x = x,
+		.y = y,
 		.color = player[plIndx]->color,
 		.type = 0,
 	};
 	sendMsg(&evt);
-	updateCamera(player[plIndx]->x, player[plIndx]->y);
+	// updateCamera(x, y);
 }
