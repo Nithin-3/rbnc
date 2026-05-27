@@ -1,5 +1,4 @@
 #include "object.h"
-#include <math.h>
 
 struct CacheEntry {
 	SDL_Texture *texture;
@@ -24,7 +23,10 @@ static SDL_Texture *make_circle_texture(SDL_Renderer *renderer, int radius, uint
 		for (int x = 0; x < diameter; x++) {
 			float dx = x - radius;
 			float dy = y - radius;
-			if (sqrtf(dx * dx + dy * dy) <= radius)
+			float dist2 = dx * dx + dy * dy;
+			if (dist2 <= 3 * 3 && radius > 3)
+				pixels[y * pitch + x] = 0xFFFFFFFF;
+			else if (dist2 <= radius * radius)
 				pixels[y * pitch + x] = color;
 		}
 	}

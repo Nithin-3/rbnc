@@ -3,9 +3,10 @@
 #include "world.h"
 #include "ws.h"
 #include <math.h>
-#define speed 100
+#define speed 50
 
 static int plIndx = -1;
+static uint8_t draw = 0;
 
 void initPlayer(float x, float y, uint32_t color) {
 	static int pl = 0;
@@ -29,15 +30,18 @@ void updatePlayer(float dirX, float dirY) {
 	float len = sqrt(dirX * dirX + dirY * dirY);
 	if (len <= 0)
 		return;
-	int x = player[plIndx]->x = (dirX / len) * speed * dt,
-	    y = player[plIndx]->y = (dirY / len) * speed * dt;
+	float x = player[plIndx]->x + (dirX / len) * speed * dt,
+	    y = player[plIndx]->y + (dirY / len) * speed * dt;
 
 	playerEvent evt = {
 		.x = x,
 		.y = y,
 		.color = player[plIndx]->color,
-		.type = 0,
+		.type = draw,
 	};
 	sendMsg(&evt);
-	// updateCamera(x, y);
+}
+
+uint32_t toggleDraw(){
+	return draw = !draw;
 }

@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	initPlayer(-10, 3, 0x00FF00FF);
+	initPlayer(-10, 3, 0x00FF00A8);
 	{
 		int w, h;
 		SDL_GetWindowSize(window, &w, &h);
@@ -53,6 +53,9 @@ int main(int argc, char *argv[]) {
 			if (e.type == SDL_EVENT_WINDOW_RESIZED) {
 				cameraSetWindowSize(e.window.data1, e.window.data2);
 			}
+			if (e.type == SDL_EVENT_KEY_DOWN && e.key.scancode == SDL_SCANCODE_SPACE) {
+				toggleDraw();
+			}
 		}
 
 		const bool *keys = SDL_GetKeyboardState(NULL);
@@ -66,7 +69,6 @@ int main(int argc, char *argv[]) {
 			dirX -= 1;
 		if (keys[SDL_SCANCODE_D] || keys[SDL_SCANCODE_RIGHT])
 			dirX += 1;
-
 		updatePlayer(dirX, dirY);
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 		SDL_RenderClear(renderer);
