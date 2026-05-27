@@ -64,21 +64,23 @@ static int callbackWs(struct lws *wsi, enum lws_callback_reasons reason, void *u
 		}
 
 		case LWS_CALLBACK_CLIENT_RECEIVE: {
-			if (len >= sizeof(playerEvent)) {
-				playerEvent *evt = (playerEvent *)in;
-				switch (evt->type) {
-					case 1: {
-						Entity e = { .color = evt->color, .x = evt->x, .y = evt->y };
-						insertEntity(e);
-					}
-					case 0:
-						for (int i = 0; i < PLAYER_LEN; i++) {
-							if (evt->color == player[i]->color) {
-								player[i]->x = evt->x, player[i]->y = evt->y;
-								updateCamera(evt->x, evt->y);
-								break;
-							}
+			uint8_t type = *(uint8_t *)in;
+			switch (type) {
+				case 1: {
+					playerEvent *evt = (playerEvent *)in;
+					Entity e = { .color = evt->color, .x = evt->x, .y = evt->y };
+					insertEntity(e);
+				}
+				case 0: {
+					playerEvent *evt = (playerEvent *)in;
+					for (int i = 0; i < PLAYER_LEN; i++) {
+						if (player[i] && evt->color == player[i]->color) {
+							player[i]->x = evt->x, player[i]->y = evt->y;
+							updateCamera(evt->x, evt->y);
+							break;
 						}
+					}
+					break;
 				}
 			}
 			break;

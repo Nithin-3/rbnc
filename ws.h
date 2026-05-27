@@ -4,9 +4,9 @@
 #include <stdint.h>
 
 typedef struct {
+	uint8_t type;
 	float x, y;
 	uint32_t color;
-	uint8_t type;
 } __attribute__((packed)) playerEvent;
 
 void wsInit(void);
