@@ -22,10 +22,16 @@ void render(SDL_Window *window, SDL_Renderer *renderer) {
 
 	for (int i = 0; i < PLAYER_LEN; i++) {
 		if (!entityHead[i])
-			break;
-		Entity *head = entityHead[i];
-		while (head) {
-			if (head->x >= cameraPos.x && head->x < cameraPos.x + cameraPos.w && head->y >= cameraPos.y && head->y < cameraPos.y + cameraPos.h) {
+			continue;
+		Entity *head = entityHead[i], *tail = entityTail[i];
+		if (head->x > cameraPos.x + cameraPos.w || tail->x < cameraPos.x)
+			continue;
+
+		while (head && head->x < cameraPos.x)
+			head = head->next;
+
+		while (head && head->x <= cameraPos.x + cameraPos.w) {
+			if (head->y >= cameraPos.y && head->y < cameraPos.y + cameraPos.h) {
 				SDL_FRect r = worldEntity2Screen(head->x - 5, head->y - 5, 10, 10);
 				struct center c = { .x = r.x + r.w / 2, .y = r.y + r.h / 2 };
 				circle_entity(renderer, c, 3, head->color);
