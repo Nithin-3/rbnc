@@ -114,7 +114,7 @@ wss.on('connection', (ws: WebSocket) => {
 		switch (type) {
 			case 0x00:
 			case 0x01: {
-				broadcast(msg, ws);
+				broadcast(msg);
 				const p = players.find(p => p.ws === ws);
 				if (p && msg.length >= 13) {
 					p.x = msg.readFloatLE(1);
@@ -136,7 +136,7 @@ wss.on('connection', (ws: WebSocket) => {
 					msg.subarray(1)
 				]);
 				ws.send(resp);
-				broadcast(resp, ws);
+				broadcast(resp);
 
 				const zeroTime = Buffer.alloc(8);
 				zeroTime.writeBigUInt64LE(0n);
