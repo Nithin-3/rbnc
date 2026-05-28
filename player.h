@@ -5,6 +5,6 @@
 
 void initPlayer(float x, float y, uint32_t color);
 void updatePlayer(float dirX, float dirY);
-uint32_t toggleDraw();
+uint8_t toggleDraw();
 
 #endif

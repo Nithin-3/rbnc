@@ -23,7 +23,7 @@ extern float dt;
 
 void insertEntity(Entity e);
 void freeEntity(Entity e);
-void insertPlayer(Player *p);
+int insertPlayer(Player *p);
 void freePlayer(int index);
 
 #endif

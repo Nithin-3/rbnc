@@ -56,19 +56,22 @@ void freeEntity(Entity e) {
 	}
 }
 
-void insertPlayer(Player *p) {
+int insertPlayer(Player *p) {
 	for (int i = 0; i < PLAYER_LEN; i++) {
-		if (player[i] != NULL)
-			continue;
-		Player *pl = malloc(sizeof(Player));
-		pl->x = p->x;
-		pl->y = p->y;
-		pl->r = p->r;
-		pl->color = p->color;
-		pl->index = i;
-		player[i] = pl;
-		return;
+		if (NULL == player[i] || p->color == player[i]->color) {
+			Player *pl = malloc(sizeof(Player));
+			pl->x = p->x;
+			pl->y = p->y;
+			pl->r = p->r;
+			pl->color = p->color;
+			pl->index = i;
+			if (player[i])
+				free(player[i]);
+			player[i] = pl;
+			return i;
+		}
 	}
+	return -1;
 }
 
 void freePlayer(int index) {
