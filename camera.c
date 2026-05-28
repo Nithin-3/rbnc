@@ -1,4 +1,3 @@
-
 #include "camera.h"
 
 #define width 640

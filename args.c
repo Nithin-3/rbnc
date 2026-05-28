@@ -1,5 +1,4 @@
 #include "args.h"
-#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -12,22 +11,29 @@ static void usage(char *argv[]) {
 }
 
 void parseArgs(int argc, char *argv[]) {
-	int opt;
-
-	while ((opt = getopt(argc, argv, "u:p:n:")) != -1) {
-		switch (opt) {
-			case 'u':
-				url = optarg;
-				break;
-			case 'p':
-				port = optarg;
-				break;
-			case 'n':
-				name = optarg;
-				break;
-			default:
+	for (int i = 1; i < argc; i++) {
+		if (argv[i][0] == '-' && argv[i][1] != '\0' && argv[i][2] == '\0') {
+			if (i + 1 >= argc) {
 				usage(argv);
 				exit(1);
+			}
+			switch (argv[i][1]) {
+				case 'u':
+					url = argv[++i];
+					break;
+				case 'p':
+					port = argv[++i];
+					break;
+				case 'n':
+					name = argv[++i];
+					break;
+				default:
+					usage(argv);
+					exit(1);
+			}
+		} else {
+			usage(argv);
+			exit(1);
 		}
 	}
 

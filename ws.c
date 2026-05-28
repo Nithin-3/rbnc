@@ -4,11 +4,11 @@
 #include "world.h"
 #include "ws.h"
 #include <libwebsockets.h>
-#include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define MAX_QUEUE 500
 
@@ -16,7 +16,8 @@
 #define WS_COLOR_OFF (WS_TYPE_SIZE)
 #define WS_X_OFF (WS_COLOR_OFF + sizeof(uint32_t))
 #define WS_Y_OFF (WS_X_OFF + sizeof(float))
-#define WS_NAME_OFF (WS_Y_OFF + sizeof(float))
+#define WS_TIME_OFF (WS_Y_OFF + sizeof(float))
+#define WS_NAME_OFF (WS_TIME_OFF + sizeof(uint64_t))
 
 typedef struct {
 	int head;
@@ -29,19 +30,20 @@ wsClient wsClientGlobal = { 0 };
 
 static struct lws_context *context = NULL;
 static volatile int wsRunning = 0;
-static pthread_t wsThread;
+static SDL_Thread *wsThread;
+static uint64_t tim;
 
 static void sigintHandler(int sig) {
 	if (sig == SIGINT)
 		wsRunning = 0;
 }
 
-static void *wsThreadFunc(void *arg) {
+static int wsThreadFunc(void *arg) {
 	while (wsRunning) {
 		if (context)
 			lws_service(context, 50);
 	}
-	return NULL;
+	return 0;
 }
 
 void sendMsg(const void *data, size_t len) {
@@ -70,10 +72,12 @@ static int callbackWs(struct lws *wsi, enum lws_callback_reasons reason, void *u
 			printf("Connected to server\n");
 			wsClientGlobal.wsi = wsi;
 			size_t len = strlen(name);
-			unsigned char buff[1 + len];
+			tim = (uint64_t)time(NULL);
+			unsigned char buff[1 + len + sizeof(tim)];
 			buff[0] = 0x03;
-			memcpy(buff + 1, name, len);
-			sendMsg(buff, 1 + len);
+			memcpy(buff + 1 , &tim, sizeof(tim));
+			memcpy(buff + 1 + sizeof(tim), name, len);
+			sendMsg(buff, 1 + sizeof(tim) + len);
 			break;
 		}
 
@@ -109,6 +113,7 @@ static int callbackWs(struct lws *wsi, enum lws_callback_reasons reason, void *u
 					uint32_t color = *(uint32_t *)(in + WS_COLOR_OFF);
 					float x = *(float *)(in + WS_X_OFF), y = *(float *)(in + WS_Y_OFF);
 					char *incoming_name = (char *)(in + WS_NAME_OFF);
+					uint64_t rtim = *(uint64_t *)(in + WS_TIME_OFF);
 					incoming_name[len - WS_NAME_OFF] = '\0';
 					Player p = {
 						.x = x,
@@ -117,9 +122,9 @@ static int callbackWs(struct lws *wsi, enum lws_callback_reasons reason, void *u
 						.color = color,
 					};
 					insertPlayer(&p);
-					if (strcmp(name, incoming_name) == 0)
+					if (tim == rtim)
 						initPlayer(x, y, color);
-					printf("%u\t%f\t%f\t%s", color, x, y, incoming_name);
+					printf("%u\t%f\t%f\t%s\n", color, x, y, incoming_name);
 					break;
 				}
 			}
@@ -211,14 +216,14 @@ void wsInit(void) {
 void wsServiceLoop(void) {
 	signal(SIGINT, sigintHandler);
 	wsRunning = 1;
-	pthread_create(&wsThread, NULL, wsThreadFunc, NULL);
+	wsThread = SDL_CreateThread(wsThreadFunc, "ws", NULL);
 }
 
 void wsStop(void) {
 	if (context)
 		lws_cancel_service(context);
 	wsRunning = 0;
-	pthread_join(wsThread, NULL);
+	SDL_WaitThread(wsThread, NULL);
 	if (context) {
 		lws_context_destroy(context);
 		context = NULL;
