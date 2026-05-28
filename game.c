@@ -32,7 +32,6 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	initPlayer(-10, 3, 0x00FF00A8);
 	{
 		int w, h;
 		SDL_GetWindowSize(window, &w, &h);

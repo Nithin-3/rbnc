@@ -1,5 +1,6 @@
 #include "args.h"
 #include "camera.h"
+#include "player.h"
 #include "world.h"
 #include "ws.h"
 #include <libwebsockets.h>
@@ -62,6 +63,11 @@ static int callbackWs(struct lws *wsi, enum lws_callback_reasons reason, void *u
 		case LWS_CALLBACK_CLIENT_ESTABLISHED: {
 			printf("Connected to server\n");
 			wsClientGlobal.wsi = wsi;
+			size_t len = strlen(name);
+			unsigned char buff[1 + len];
+			buff[0] = 0x03;
+			memcpy(buff + 1, name, len);
+			sendMsg(buff, 1 + len);
 			break;
 		}
 
