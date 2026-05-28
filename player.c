@@ -18,8 +18,9 @@ void initPlayer(float x, float y, uint32_t color) {
 		.r = 100,
 		.color = color,
 	};
-	insertPlayer(&p);
-	plIndx = p.index;
+	plIndx = insertPlayer(&p);
+	if (plIndx < 0)
+		return;
 	updateCamera(p.x, p.y);
 	pl = 1;
 }
@@ -31,7 +32,7 @@ void updatePlayer(float dirX, float dirY) {
 	if (len <= 0)
 		return;
 	float x = player[plIndx]->x + (dirX / len) * speed * dt,
-	    y = player[plIndx]->y + (dirY / len) * speed * dt;
+	      y = player[plIndx]->y + (dirY / len) * speed * dt;
 
 	playerEvent evt = {
 		.x = x,
@@ -39,9 +40,9 @@ void updatePlayer(float dirX, float dirY) {
 		.color = player[plIndx]->color,
 		.type = draw,
 	};
-	sendMsg(&evt);
+	sendMsg(&evt, sizeof(evt));
 }
 
-uint32_t toggleDraw(){
+uint8_t toggleDraw() {
 	return draw = !draw;
 }

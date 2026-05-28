@@ -14,7 +14,7 @@
 typedef struct {
 	int head;
 	int tail;
-	playerEvent queue[MAX_QUEUE];
+	wsMsg queue[MAX_QUEUE];
 	struct lws *wsi;
 } wsClient;
 
@@ -37,7 +37,7 @@ static void *wsThreadFunc(void *arg) {
 	return NULL;
 }
 
-void sendMsg(const playerEvent *event) {
+void sendMsg(const void *data, size_t len) {
 	int next = (wsClientGlobal.tail + 1) % MAX_QUEUE;
 
 	if (next == wsClientGlobal.head) {
@@ -45,7 +45,9 @@ void sendMsg(const playerEvent *event) {
 		return;
 	}
 
-	memcpy(&wsClientGlobal.queue[wsClientGlobal.tail], event, sizeof(playerEvent));
+	wsClientGlobal.queue[wsClientGlobal.tail].data = malloc(len);
+	memcpy(wsClientGlobal.queue[wsClientGlobal.tail].data, data, len);
+	wsClientGlobal.queue[wsClientGlobal.tail].len = len;
 
 	wsClientGlobal.tail = next;
 
@@ -90,14 +92,17 @@ static int callbackWs(struct lws *wsi, enum lws_callback_reasons reason, void *u
 			if (wsClientGlobal.head == wsClientGlobal.tail)
 				break;
 
-			playerEvent *evt = &wsClientGlobal.queue[wsClientGlobal.head];
+			wsMsg *msg = &wsClientGlobal.queue[wsClientGlobal.head];
 
-			unsigned char buf[LWS_PRE + sizeof(playerEvent)];
+			unsigned char buf[LWS_PRE + msg->len];
 			unsigned char *p = &buf[LWS_PRE];
 
-			memcpy(p, evt, sizeof(playerEvent));
+			memcpy(p, msg->data, msg->len);
 
-			lws_write(wsi, p, sizeof(playerEvent), LWS_WRITE_BINARY);
+			lws_write(wsi, p, msg->len, LWS_WRITE_BINARY);
+
+			free(msg->data);
+			msg->data = NULL;
 
 			wsClientGlobal.head = (wsClientGlobal.head + 1) % MAX_QUEUE;
 
