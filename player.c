@@ -34,6 +34,13 @@ void updatePlayer(float dirX, float dirY) {
 	float x = player[plIndx]->x + (dirX / len) * speed * dt,
 	      y = player[plIndx]->y + (dirY / len) * speed * dt;
 
+	// TODO:
+	// update via network resive 
+	// save color globaly create function  update state args color x y
+	player[plIndx]->x = x;
+	player[plIndx]->y = y;
+	updateCamera(x, y);
+
 	playerEvent evt = {
 		.x = x,
 		.y = y,

@@ -56,6 +56,22 @@ void freeEntity(Entity e) {
 	}
 }
 
+void freeEntityByColor(uint32_t color) {
+	for (int i = 0; i < PLAYER_LEN; i++) {
+		Entity *cur = entityHead[i];
+		while (cur && cur->color == color) {
+			Entity *next = cur->next;
+			free(cur);
+			cur = next;
+		}
+		if (entityHead[i] && entityHead[i]->color == color) {
+			entityHead[i] = cur;
+			if (!cur)
+				entityTail[i] = NULL;
+		}
+	}
+}
+
 int insertPlayer(Player *p) {
 	for (int i = 0; i < PLAYER_LEN; i++) {
 		if (NULL == player[i] || p->color == player[i]->color) {

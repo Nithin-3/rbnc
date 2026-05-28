@@ -23,6 +23,7 @@ extern float dt;
 
 void insertEntity(Entity e);
 void freeEntity(Entity e);
+void freeEntityByColor(uint32_t color);
 int insertPlayer(Player *p);
 void freePlayer(int index);
 

@@ -101,7 +101,6 @@ static int callbackWs(struct lws *wsi, enum lws_callback_reasons reason, void *u
 					for (int i = 0; i < PLAYER_LEN; i++) {
 						if (player[i] && evt->color == player[i]->color) {
 							player[i]->x = evt->x, player[i]->y = evt->y;
-							updateCamera(evt->x, evt->y);
 							break;
 						}
 					}
@@ -125,6 +124,19 @@ static int callbackWs(struct lws *wsi, enum lws_callback_reasons reason, void *u
 					if (tim == rtim)
 						initPlayer(x, y, color);
 					printf("%u\t%f\t%f\t%s\n", color, x, y, incoming_name);
+					break;
+				}
+				case 4: {
+					if (len < 5)
+						break;
+					uint32_t leaveColor = *(uint32_t *)(in + 1);
+					for (int i = 0; i < PLAYER_LEN; i++) {
+						if (player[i] && player[i]->color == leaveColor) {
+							freePlayer(i);
+							break;
+						}
+					}
+					freeEntityByColor(leaveColor);
 					break;
 				}
 			}
