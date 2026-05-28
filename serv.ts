@@ -135,7 +135,6 @@ wss.on('connection', (ws: WebSocket) => {
 					xyBuf,
 					msg.subarray(1)
 				]);
-				ws.send(resp);
 				broadcast(resp);
 
 				const zeroTime = Buffer.alloc(8);
