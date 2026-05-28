@@ -78,8 +78,8 @@ wss.on('connection', (ws: WebSocket) => {
 		const type = msg.readUInt8(0);
 
 		switch (type) {
+			case 0x00:
 			case 0x01:
-			case 0x02:
 				ws.send(msg);
 				break;
 			case 0x03:
