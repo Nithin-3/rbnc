@@ -1,6 +1,17 @@
 import WebSocket, { WebSocketServer } from 'ws';
 
 const wss = new WebSocketServer({ port: 3000 });
+const PLAYER_MAX = 10;
+
+interface PlayerInfo {
+	ws: WebSocket;
+	color: number;
+	x: number;
+	y: number;
+	name: string;
+}
+
+const players: PlayerInfo[] = [];
 
 let spiralIdx = 0;
 const SPIRAL_STEP = 110;
@@ -26,7 +37,24 @@ function nextSpiralPos(): [number, number] {
 	return [x, y];
 }
 
-const colors: number[] = [
+function broadcast(data: Buffer, exclude?: WebSocket) {
+	wss.clients.forEach(client => {
+		if (client.readyState === WebSocket.OPEN && client !== exclude) {
+			client.send(data);
+		}
+	});
+}
+
+function colorToBuf(color: number): Buffer {
+	return Buffer.from([
+		(color >> 24) & 0xff,
+		(color >> 16) & 0xff,
+		(color >> 8) & 0xff,
+		color & 0xff
+	]);
+}
+
+const COLORS: number[] = [
 	0xbb7135A8,
 	0x9492beA8,
 	0xe439c0A8,
@@ -71,37 +99,81 @@ const colors: number[] = [
 	0xa29bfeA8,
 	0xfd79a8A8
 ];
+
+let colors = [...COLORS];
+
 wss.on('connection', (ws: WebSocket) => {
+	if (players.length >= PLAYER_MAX) {
+		ws.close(4001, "server full");
+		return;
+	}
 	ws.on('message', (msg: Buffer) => {
 		if (msg.length === 0) return;
-		console.log("received:", msg);
 		const type = msg.readUInt8(0);
 
 		switch (type) {
 			case 0x00:
-			case 0x01:
-				ws.send(msg);
+			case 0x01: {
+				broadcast(msg, ws);
+				const p = players.find(p => p.ws === ws);
+				if (p && msg.length >= 13) {
+					p.x = msg.readFloatLE(1);
+					p.y = msg.readFloatLE(5);
+				}
 				break;
-			case 0x03:
-				const pick = colors[Math.floor(Math.random() * colors.length)];
-				const colorBuf = Buffer.from([
-					(pick >> 24) & 0xff,
-					(pick >> 16) & 0xff,
-					(pick >> 8) & 0xff,
-					pick & 0xff
-				]);
+			}
+			case 0x03: {
+				const pick = colors.splice(Math.floor(Math.random() * colors.length), 1)[0];
+				const colorBuf = colorToBuf(pick);
 				const [x, y] = nextSpiralPos();
 				const xyBuf = Buffer.alloc(8);
 				xyBuf.writeFloatLE(x, 0);
 				xyBuf.writeFloatLE(y, 4);
-				ws.send(Buffer.concat([
+				const resp = Buffer.concat([
 					Buffer.from([0x03]),
 					colorBuf,
 					xyBuf,
 					msg.subarray(1)
-				]));
+				]);
+				ws.send(resp);
+				broadcast(resp, ws);
+
+				const zeroTime = Buffer.alloc(8);
+				zeroTime.writeBigUInt64LE(0n);
+				for (const existing of players) {
+					const eXyBuf = Buffer.alloc(8);
+					eXyBuf.writeFloatLE(existing.x, 0);
+					eXyBuf.writeFloatLE(existing.y, 4);
+					ws.send(Buffer.concat([
+						Buffer.from([0x03]),
+						colorToBuf(existing.color),
+						eXyBuf,
+						zeroTime,
+						Buffer.from(existing.name)
+					]));
+				}
+
+				const timeLen = 8;
+				const name = msg.subarray(1 + timeLen).toString('utf-8');
+				players.push({ ws, color: pick, x, y, name });
+				break;
+			}
 			default:
 				console.log("unknown packet");
+		}
+	});
+
+	ws.on('close', () => {
+		const idx = players.findIndex(p => p.ws === ws);
+		if (idx !== -1) {
+			const leftColor = players[idx].color;
+			players.splice(idx, 1);
+			if (players.length === 0)
+				colors = [...COLORS];
+			const leaveMsg = Buffer.alloc(5);
+			leaveMsg.writeUInt8(0x04, 0);
+			leaveMsg.writeUInt32LE(leftColor, 1);
+			broadcast(leaveMsg);
 		}
 	});
 });
