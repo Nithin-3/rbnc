@@ -75,7 +75,7 @@ static int callbackWs(struct lws *wsi, enum lws_callback_reasons reason, void *u
 			tim = (uint64_t)time(NULL);
 			unsigned char buff[1 + len + sizeof(tim)];
 			buff[0] = 0x03;
-			memcpy(buff + 1 , &tim, sizeof(tim));
+			memcpy(buff + 1, &tim, sizeof(tim));
 			memcpy(buff + 1 + sizeof(tim), name, len);
 			sendMsg(buff, 1 + sizeof(tim) + len);
 			break;

@@ -11,7 +11,7 @@ typedef struct {
 	uint8_t type;
 	float x, y;
 	uint32_t color;
-} 
+}
 #if !defined(_MSC_VER)
 __attribute__((packed))
 #endif
