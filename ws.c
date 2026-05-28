@@ -109,6 +109,7 @@ static int callbackWs(struct lws *wsi, enum lws_callback_reasons reason, void *u
 					uint32_t color = *(uint32_t *)(in + WS_COLOR_OFF);
 					float x = *(float *)(in + WS_X_OFF), y = *(float *)(in + WS_Y_OFF);
 					char *incoming_name = (char *)(in + WS_NAME_OFF);
+					incoming_name[len - WS_NAME_OFF] = '\0';
 					Player p = {
 						.x = x,
 						.y = y,

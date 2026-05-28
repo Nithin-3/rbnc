@@ -6,7 +6,6 @@
 #include "render.h"
 #include "world.h"
 #include <SDL3/SDL.h>
-#include <stdio.h>
 
 int main(int argc, char *argv[]) {
 	parseArgs(argc, argv);
