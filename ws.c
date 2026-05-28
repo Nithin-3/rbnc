@@ -12,6 +12,12 @@
 
 #define MAX_QUEUE 500
 
+#define WS_TYPE_SIZE sizeof(uint8_t)
+#define WS_COLOR_OFF (WS_TYPE_SIZE)
+#define WS_X_OFF (WS_COLOR_OFF + sizeof(uint32_t))
+#define WS_Y_OFF (WS_X_OFF + sizeof(float))
+#define WS_NAME_OFF (WS_Y_OFF + sizeof(float))
+
 typedef struct {
 	int head;
 	int tail;
@@ -72,14 +78,21 @@ static int callbackWs(struct lws *wsi, enum lws_callback_reasons reason, void *u
 		}
 
 		case LWS_CALLBACK_CLIENT_RECEIVE: {
+			if (len < 1)
+				break;
 			uint8_t type = *(uint8_t *)in;
 			switch (type) {
 				case 1: {
+					if (len < sizeof(playerEvent))
+						break;
 					playerEvent *evt = (playerEvent *)in;
 					Entity e = { .color = evt->color, .x = evt->x, .y = evt->y };
 					insertEntity(e);
+					// NOTE: it need to go case 0 don't need break;
 				}
 				case 0: {
+					if (len < sizeof(playerEvent))
+						break;
 					playerEvent *evt = (playerEvent *)in;
 					for (int i = 0; i < PLAYER_LEN; i++) {
 						if (player[i] && evt->color == player[i]->color) {
@@ -88,6 +101,24 @@ static int callbackWs(struct lws *wsi, enum lws_callback_reasons reason, void *u
 							break;
 						}
 					}
+					break;
+				}
+				case 3: {
+					if (len < WS_NAME_OFF + 1)
+						break;
+					uint32_t color = *(uint32_t *)(in + WS_COLOR_OFF);
+					float x = *(float *)(in + WS_X_OFF), y = *(float *)(in + WS_Y_OFF);
+					char *incoming_name = (char *)(in + WS_NAME_OFF);
+					Player p = {
+						.x = x,
+						.y = y,
+						.r = 100,
+						.color = color,
+					};
+					insertPlayer(&p);
+					if (strcmp(name, incoming_name) == 0)
+						initPlayer(x, y, color);
+					printf("%u\t%f\t%f\t%s", color, x, y, incoming_name);
 					break;
 				}
 			}
