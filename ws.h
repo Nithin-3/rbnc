@@ -29,5 +29,6 @@ void wsInit(void);
 void sendMsg(const void *data, size_t len);
 void wsServiceLoop(void);
 void wsStop(void);
+int wsWaitForInit(void);
 
 #endif

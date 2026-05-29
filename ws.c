@@ -32,6 +32,10 @@ static struct lws_context *context = NULL;
 static volatile int wsRunning = 0;
 static SDL_Thread *wsThread;
 static uint64_t tim;
+static SDL_Mutex *initMutex = NULL;
+static SDL_Condition *initCond = NULL;
+static int initDone = 0;
+static int initFailed = 0;
 
 static void sigintHandler(int sig) {
 	if (sig == SIGINT)
@@ -121,8 +125,13 @@ static int callbackWs(struct lws *wsi, enum lws_callback_reasons reason, void *u
 						.color = color,
 					};
 					insertPlayer(&p);
-					if (tim == rtim)
+					if (tim == rtim) {
 						initPlayer(x, y, color);
+						SDL_LockMutex(initMutex);
+						initDone = 1;
+						SDL_SignalCondition(initCond);
+						SDL_UnlockMutex(initMutex);
+					}
 					printf("%u\t%f\t%f\t%s\n", color, x, y, incoming_name);
 					break;
 				}
@@ -167,13 +176,22 @@ static int callbackWs(struct lws *wsi, enum lws_callback_reasons reason, void *u
 			break;
 		}
 
-		case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
+			case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
 			printf("Connection error\n");
+			SDL_LockMutex(initMutex);
+			initFailed = 1;
+			SDL_SignalCondition(initCond);
+			SDL_UnlockMutex(initMutex);
 			break;
 
 		case LWS_CALLBACK_CLOSED:
 			printf("Connection closed\n");
 			wsClientGlobal.wsi = NULL;
+			SDL_LockMutex(initMutex);
+			if (!initDone)
+				initFailed = 1;
+			SDL_SignalCondition(initCond);
+			SDL_UnlockMutex(initMutex);
 			break;
 
 		default:
@@ -193,7 +211,20 @@ static struct lws_protocols protocols[] = {
 	{ NULL, NULL, 0, 0 }
 };
 
+int wsWaitForInit(void) {
+	SDL_LockMutex(initMutex);
+	while (!initDone && !initFailed)
+		SDL_WaitCondition(initCond, initMutex);
+	SDL_UnlockMutex(initMutex);
+	return initDone;
+}
+
 void wsInit(void) {
+	initMutex = SDL_CreateMutex();
+	initCond = SDL_CreateCondition();
+	initDone = 0;
+	initFailed = 0;
+
 	struct lws_context_creation_info info;
 	memset(&info, 0, sizeof(info));
 
@@ -204,6 +235,10 @@ void wsInit(void) {
 
 	if (!context) {
 		printf("Failed to create context\n");
+		SDL_LockMutex(initMutex);
+		initFailed = 1;
+		SDL_SignalCondition(initCond);
+		SDL_UnlockMutex(initMutex);
 		return;
 	}
 
@@ -219,6 +254,10 @@ void wsInit(void) {
 
 	if (!lws_client_connect_via_info(&ccinfo)) {
 		printf("Connection failed\n");
+		SDL_LockMutex(initMutex);
+		initFailed = 1;
+		SDL_SignalCondition(initCond);
+		SDL_UnlockMutex(initMutex);
 		return;
 	}
 
@@ -239,5 +278,13 @@ void wsStop(void) {
 	if (context) {
 		lws_context_destroy(context);
 		context = NULL;
+	}
+	if (initMutex) {
+		SDL_DestroyMutex(initMutex);
+		initMutex = NULL;
+	}
+	if (initCond) {
+		SDL_DestroyCondition(initCond);
+		initCond = NULL;
 	}
 }

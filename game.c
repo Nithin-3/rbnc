@@ -37,9 +37,15 @@ int main(int argc, char *argv[]) {
 		cameraSetWindowSize(w, h);
 	}
 
+	int running = 1;
+
+	if (!wsWaitForInit()) {
+		SDL_Log("WebSocket init failed");
+		running = 0;
+	}
+
 	Uint64 prev = SDL_GetTicks();
 	SDL_Event e;
-	int running = 1;
 	while (running) {
 		Uint64 now = SDL_GetTicks();
 		dt = (now - prev) / 1000.0f;
