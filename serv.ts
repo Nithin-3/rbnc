@@ -38,11 +38,11 @@ function nextSpiralPos(): [number, number] {
 }
 
 function broadcast(data: Buffer, exclude?: WebSocket) {
-	wss.clients.forEach(client => {
+	setTimeout(() => wss.clients.forEach(client => {
 		if (client.readyState === WebSocket.OPEN && client !== exclude) {
 			client.send(data);
 		}
-	});
+	}), Math.floor(Math.random() * 1000))
 }
 
 function colorToBuf(color: number): Buffer {
