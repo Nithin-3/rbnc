@@ -1,5 +1,6 @@
 #include "args.h"
 #include "camera.h"
+#include "hud.h"
 #include "ws.h"
 #include "object.h"
 #include "player.h"
@@ -30,6 +31,8 @@ int main(int argc, char *argv[]) {
 		SDL_Quit();
 		return 1;
 	}
+
+	hud_init(renderer);
 
 	{
 		int w, h;
@@ -77,14 +80,14 @@ int main(int argc, char *argv[]) {
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 		SDL_RenderClear(renderer);
 		render(window, renderer);
+		int fps = dt > 0 ? (int)(1.0f / dt) : 0;
+		hud_update(renderer, fps);
+		hud_render(renderer);
 		SDL_RenderPresent(renderer);
-
-		// float fps = 1.0f / dt;
-		//
-		// fprintf(stdout,"\rFPS:\t%.2f", fps);
 	}
 
 	circle_cache_destroy();
+	hud_destroy();
 	wsStop();
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);

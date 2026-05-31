@@ -17,6 +17,7 @@ add_executable(game
     object.c
     args.c
     ws.c
+    hud.c
 )
 
 target_include_directories(game PRIVATE
