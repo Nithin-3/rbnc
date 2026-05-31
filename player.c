@@ -4,7 +4,6 @@
 #include "ws.h"
 #include <math.h>
 #include <string.h>
-#include <time.h>
 #define speed 50
 
 static int plIndx = -1;
@@ -44,7 +43,10 @@ void updatePlayer(float dirX, float dirY) {
 		.color = player[plIndx]->color,
 		.type = draw,
 	};
-	sendTime = time(NULL);
+	if (!awaitingPing) {
+		sendTime = SDL_GetTicks();
+		awaitingPing = 1;
+	}
 	sendMsg(&evt, sizeof(evt));
 }
 

@@ -111,7 +111,8 @@ static int callbackWs(struct lws *wsi, enum lws_callback_reasons reason, void *u
 						}
 					}
 					if (evt->color == playerColor()) {
-						ping = time(NULL) - sendTime;
+						ping = SDL_GetTicks() - sendTime;
+						awaitingPing = 0;
 						updateCamera(evt->x, evt->y);
 					}
 					break;
