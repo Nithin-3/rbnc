@@ -1,6 +1,7 @@
 #include "hud.h"
 #include "world.h"
 #include <stdio.h>
+#include <inttypes.h>
 
 #define HUD_TEX_W 300
 #define HUD_TEX_H 200
@@ -27,6 +28,10 @@ void hud_update(SDL_Renderer *renderer, int fps) {
 	int y = 0;
 
 	snprintf(line, sizeof(line), "FPS: %d", fps);
+	SDL_RenderDebugText(renderer, 0, y, line);
+	y += 10;
+
+	snprintf(line, sizeof(line), "ping: %" PRIu64, ping);
 	SDL_RenderDebugText(renderer, 0, y, line);
 	y += 10;
 

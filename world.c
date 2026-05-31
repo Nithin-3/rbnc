@@ -5,6 +5,7 @@
 Player *player[PLAYER_LEN];
 Entity *entityHead[PLAYER_LEN] = { 0 }, *entityTail[PLAYER_LEN] = { 0 };
 float dt;
+uint64_t ping, sendTime;
 
 void insertEntity(Entity e) {
 	for (int i = 0; i < PLAYER_LEN; i++) {

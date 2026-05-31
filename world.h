@@ -18,9 +18,10 @@ typedef struct {
 	uint32_t color;
 } Player;
 
-extern Player *player[PLAYER_LEN];
 extern Entity *entityHead[PLAYER_LEN], *entityTail[PLAYER_LEN];
+extern Player *player[PLAYER_LEN];
 extern float dt;
+extern uint64_t sendTime, ping;
 
 void insertEntity(Entity e);
 void freeEntity(Entity e);

@@ -110,8 +110,10 @@ static int callbackWs(struct lws *wsi, enum lws_callback_reasons reason, void *u
 							break;
 						}
 					}
-					if (evt->color == playerColor())
+					if (evt->color == playerColor()) {
+						ping = time(NULL) - sendTime;
 						updateCamera(evt->x, evt->y);
+					}
 					break;
 				}
 				case 3: {
