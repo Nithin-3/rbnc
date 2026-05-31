@@ -1,5 +1,6 @@
 #include "world.h"
 #include <stdlib.h>
+#include <string.h>
 
 Player *player[PLAYER_LEN];
 Entity *entityHead[PLAYER_LEN] = { 0 }, *entityTail[PLAYER_LEN] = { 0 };
@@ -81,6 +82,7 @@ int insertPlayer(Player *p) {
 			pl->r = p->r;
 			pl->color = p->color;
 			pl->index = i;
+			strncpy(pl->name, p->name, sizeof(pl->name) - 1);
 			if (player[i])
 				free(player[i]);
 			player[i] = pl;

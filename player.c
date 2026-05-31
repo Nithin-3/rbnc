@@ -3,12 +3,13 @@
 #include "world.h"
 #include "ws.h"
 #include <math.h>
+#include <string.h>
 #define speed 50
 
 static int plIndx = -1;
 static uint8_t draw = 0;
 
-void initPlayer(float x, float y, uint32_t color) {
+void initPlayer(float x, float y, uint32_t color, const char name[64]) {
 	static int pl = 0;
 	if (pl)
 		return;
@@ -18,6 +19,8 @@ void initPlayer(float x, float y, uint32_t color) {
 		.r = 100,
 		.color = color,
 	};
+	if (name)
+		strncpy(p.name, name, sizeof(p.name) - 1);
 	plIndx = insertPlayer(&p);
 	if (plIndx < 0)
 		return;

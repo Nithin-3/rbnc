@@ -12,6 +12,7 @@ typedef struct Entity {
 } Entity;
 
 typedef struct {
+	char name[64];
 	float x, y;
 	int index, r;
 	uint32_t color;

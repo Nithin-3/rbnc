@@ -124,9 +124,10 @@ static int callbackWs(struct lws *wsi, enum lws_callback_reasons reason, void *u
 						.r = 100,
 						.color = color,
 					};
+					strncpy(p.name, incoming_name, sizeof(p.name) - 1);
 					insertPlayer(&p);
 					if (tim == rtim) {
-						initPlayer(x, y, color);
+						initPlayer(x, y, color,incoming_name);
 						SDL_LockMutex(initMutex);
 						initDone = 1;
 						SDL_SignalCondition(initCond);
