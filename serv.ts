@@ -122,6 +122,10 @@ wss.on('connection', (ws: WebSocket) => {
 				}
 				break;
 			}
+			case 0x02:{
+				broadcast(msg);
+				break;
+			}
 			case 0x03: {
 				const pick = colors.splice(Math.floor(Math.random() * colors.length), 1)[0];
 				const colorBuf = colorToBuf(pick);
