@@ -3,6 +3,8 @@
 #include "player.h"
 #include "world.h"
 #include "ws.h"
+#include <SDL3/SDL_mutex.h>
+#include <SDL3/SDL_thread.h>
 #include <libwebsockets.h>
 #include <signal.h>
 #include <stdio.h>
@@ -108,6 +110,8 @@ static int callbackWs(struct lws *wsi, enum lws_callback_reasons reason, void *u
 							break;
 						}
 					}
+					if (evt->color == playerColor())
+						updateCamera(evt->x, evt->y);
 					break;
 				}
 				case 3: {
@@ -127,7 +131,7 @@ static int callbackWs(struct lws *wsi, enum lws_callback_reasons reason, void *u
 					strncpy(p.name, incoming_name, sizeof(p.name) - 1);
 					insertPlayer(&p);
 					if (tim == rtim) {
-						initPlayer(x, y, color,incoming_name);
+						initPlayer(x, y, color, incoming_name);
 						SDL_LockMutex(initMutex);
 						initDone = 1;
 						SDL_SignalCondition(initCond);
@@ -177,7 +181,7 @@ static int callbackWs(struct lws *wsi, enum lws_callback_reasons reason, void *u
 			break;
 		}
 
-			case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
+		case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
 			printf("Connection error\n");
 			SDL_LockMutex(initMutex);
 			initFailed = 1;

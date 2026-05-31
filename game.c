@@ -48,6 +48,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	Uint64 prev = SDL_GetTicks();
+	Uint64 hudPrev = 0;
 	SDL_Event e;
 	while (running) {
 		Uint64 now = SDL_GetTicks();
@@ -80,8 +81,11 @@ int main(int argc, char *argv[]) {
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 		SDL_RenderClear(renderer);
 		render(window, renderer);
-		int fps = dt > 0 ? (int)(1.0f / dt) : 0;
-		hud_update(renderer, fps);
+		if (now - hudPrev >= 100) {
+			int fps = dt > 0 ? (int)(1.0f / dt) : 0;
+			hud_update(renderer, fps);
+			hudPrev = now;
+		}
 		hud_render(renderer);
 		SDL_RenderPresent(renderer);
 	}
