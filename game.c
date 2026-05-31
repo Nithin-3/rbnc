@@ -78,6 +78,7 @@ int main(int argc, char *argv[]) {
 		if (keys[SDL_SCANCODE_D] || keys[SDL_SCANCODE_RIGHT])
 			dirX += 1;
 		updatePlayer(dirX, dirY);
+		sendPeriodicPing();
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 		SDL_RenderClear(renderer);
 		render(window, renderer);

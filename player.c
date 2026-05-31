@@ -57,3 +57,23 @@ uint8_t toggleDraw() {
 uint32_t playerColor() {
 	return plIndx < 0 || plIndx > PLAYER_LEN ? 0 : player[plIndx]->color;
 }
+
+static uint64_t lastPingTime = 0;
+
+void sendPeriodicPing(void) {
+	if (plIndx < 0)
+		return;
+	uint64_t now = SDL_GetTicks();
+	if (now - lastPingTime < 2000)
+		return;
+	lastPingTime = now;
+
+	if (!awaitingPing) {
+		sendTime = SDL_GetTicks();
+		awaitingPing = 1;
+	}
+	unsigned char buff[1 + sizeof(uint32_t)];
+	buff[0] = 0x02;
+	memcpy(buff + 1, &player[plIndx]->color, sizeof(player[plIndx]->color));
+	sendMsg(&buff, sizeof(buff));
+}

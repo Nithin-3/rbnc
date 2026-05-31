@@ -31,7 +31,7 @@ void hud_update(SDL_Renderer *renderer, int fps) {
 	SDL_RenderDebugText(renderer, 0, y, line);
 	y += 10;
 
-	snprintf(line, sizeof(line), "ping: %" PRIu64, ping);
+	snprintf(line, sizeof(line), "ping: %" PRIu64 "ms", ping);
 	SDL_RenderDebugText(renderer, 0, y, line);
 	y += 10;
 
