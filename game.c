@@ -11,7 +11,6 @@
 int main(int argc, char *argv[]) {
 	parseArgs(argc, argv);
 	wsInit();
-	wsServiceLoop();
 	SDL_Init(SDL_INIT_VIDEO);
 
 	SDL_Window *window = SDL_CreateWindow("rbnc", 0, 0, SDL_WINDOW_FULLSCREEN);
@@ -22,9 +21,8 @@ int main(int argc, char *argv[]) {
 	}
 
 	SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL);
-	if (!SDL_SetRenderVSync(renderer, -1)) {
+	if (!SDL_SetRenderVSync(renderer, -1))
 		SDL_SetRenderVSync(renderer, 1);
-	}
 	if (!renderer) {
 		SDL_Log("SDL_CreateRenderer failed: %s", SDL_GetError());
 		SDL_DestroyWindow(window);
@@ -33,22 +31,15 @@ int main(int argc, char *argv[]) {
 	}
 
 	hud_init(renderer);
-
-	{
-		int w, h;
-		SDL_GetWindowSize(window, &w, &h);
-		cameraSetWindowSize(w, h);
-	}
+	{ int w, h; SDL_GetWindowSize(window, &w, &h); cameraSetWindowSize(w, h); }
 
 	int running = 1;
-
 	if (!wsWaitForInit()) {
 		SDL_Log("WebSocket init failed");
 		running = 0;
 	}
 
-	Uint64 prev = SDL_GetTicks();
-	Uint64 hudPrev = 0;
+	Uint64 prev = SDL_GetTicks(), hudPrev = 0;
 	SDL_Event e;
 	while (running) {
 		Uint64 now = SDL_GetTicks();
@@ -56,35 +47,27 @@ int main(int argc, char *argv[]) {
 		prev = now;
 
 		while (SDL_PollEvent(&e)) {
-			if (e.type == SDL_EVENT_QUIT)
-				running = 0;
-			if (e.type == SDL_EVENT_WINDOW_RESIZED) {
+			if (e.type == SDL_EVENT_QUIT) running = 0;
+			if (e.type == SDL_EVENT_WINDOW_RESIZED)
 				cameraSetWindowSize(e.window.data1, e.window.data2);
-			}
-			if (e.type == SDL_EVENT_KEY_DOWN && e.key.scancode == SDL_SCANCODE_SPACE) {
+			if (e.type == SDL_EVENT_KEY_DOWN && e.key.scancode == SDL_SCANCODE_SPACE)
 				toggleDraw();
-			}
 		}
 
 		const bool *keys = SDL_GetKeyboardState(NULL);
 		float dirX = 0, dirY = 0;
-
-		if (keys[SDL_SCANCODE_W] || keys[SDL_SCANCODE_UP])
-			dirY -= 1;
-		if (keys[SDL_SCANCODE_S] || keys[SDL_SCANCODE_DOWN])
-			dirY += 1;
-		if (keys[SDL_SCANCODE_A] || keys[SDL_SCANCODE_LEFT])
-			dirX -= 1;
-		if (keys[SDL_SCANCODE_D] || keys[SDL_SCANCODE_RIGHT])
-			dirX += 1;
+		if (keys[SDL_SCANCODE_W] || keys[SDL_SCANCODE_UP]) dirY -= 1;
+		if (keys[SDL_SCANCODE_S] || keys[SDL_SCANCODE_DOWN]) dirY += 1;
+		if (keys[SDL_SCANCODE_A] || keys[SDL_SCANCODE_LEFT]) dirX -= 1;
+		if (keys[SDL_SCANCODE_D] || keys[SDL_SCANCODE_RIGHT]) dirX += 1;
 		updatePlayer(dirX, dirY);
 		sendPeriodicPing();
+		wsPoll();
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 		SDL_RenderClear(renderer);
 		render(window, renderer);
 		if (now - hudPrev >= 100) {
-			int fps = dt > 0 ? (int)(1.0f / dt) : 0;
-			hud_update(renderer, fps);
+			hud_update(renderer, dt > 0 ? (int)(1.0f / dt) : 0);
 			hudPrev = now;
 		}
 		hud_render(renderer);
