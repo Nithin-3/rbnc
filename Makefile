@@ -1,5 +1,5 @@
 CFLAGS := $(shell pkg-config --cflags sdl3)
-LDFLAGS := $(shell pkg-config --libs sdl3) -lm -lwebsockets -lpthread
+LDFLAGS := $(shell pkg-config --libs sdl3) -lm $(shell pkg-config --libs libcurl)
 OBJDIR := out
 
 game: $(OBJDIR)/game.o $(OBJDIR)/world.o $(OBJDIR)/player.o \
@@ -45,4 +45,3 @@ format:
 
 check-format:
 	find -name "*.[ch]" | xargs clang-format --dry-run --Werror
-
