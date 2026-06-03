@@ -136,6 +136,11 @@ static void sendQueuedMessages(void) {
 		CURLcode res = curl_ws_send(curl, msg->data, msg->len, &sent, 0, CURLWS_BINARY);
 		if (res == CURLE_AGAIN) return;
 		if (res != CURLE_OK) { printf("Send error: %s\n", curl_easy_strerror(res)); return; }
+		if (sent < msg->len) {
+			memmove(msg->data, (char *)msg->data + sent, msg->len - sent);
+			msg->len -= sent;
+			return;
+		}
 		free(msg->data);
 		msg->data = NULL;
 		wsClientGlobal.head = (wsClientGlobal.head + 1) % MAX_QUEUE;
