@@ -3,9 +3,9 @@
 #include "player.h"
 #include "world.h"
 #include "ws.h"
-#include <SDL3/SDL_mutex.h>
-#include <SDL3/SDL_thread.h>
-#include <libwebsockets.h>
+#include <curl/curl.h>
+#include <poll.h>
+#include <SDL3/SDL.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,278 +25,201 @@ typedef struct {
 	int head;
 	int tail;
 	wsMsg queue[MAX_QUEUE];
-	struct lws *wsi;
 } wsClient;
 
-wsClient wsClientGlobal = { 0 };
-
-static struct lws_context *context = NULL;
-static volatile int wsRunning = 0;
-static SDL_Thread *wsThread;
-static uint64_t tim;
-static SDL_Mutex *initMutex = NULL;
-static SDL_Condition *initCond = NULL;
+static wsClient wsClientGlobal = { 0 };
+static CURL *curl = NULL;
+static curl_socket_t sockfd = CURL_SOCKET_BAD;
+static int connected = 0;
 static int initDone = 0;
-static int initFailed = 0;
+static uint64_t tim;
 
-static void sigintHandler(int sig) {
-	if (sig == SIGINT)
-		wsRunning = 0;
-}
+static void buildWsUrl(char *buf, size_t size) {
+	const char *p = port ? port : "80";
 
-static int wsThreadFunc(void *arg) {
-	while (wsRunning) {
-		if (context)
-			lws_service(context, 50);
+	if (url && strstr(url, "://")) {
+		if (strncmp(url, "http://", 7) == 0)
+			snprintf(buf, size, "ws://%s", url + 7);
+		else if (strncmp(url, "https://", 8) == 0)
+			snprintf(buf, size, "wss://%s", url + 8);
+		else
+			snprintf(buf, size, "%s", url);
+	} else if (url) {
+		snprintf(buf, size, "ws://%s:%s/", url, p);
+	} else {
+		snprintf(buf, size, "ws://%s:%s/", ip, p);
 	}
-	return 0;
 }
 
 void sendMsg(const void *data, size_t len) {
 	int next = (wsClientGlobal.tail + 1) % MAX_QUEUE;
-
 	if (next == wsClientGlobal.head) {
 		printf("Queue full, dropping message\n");
 		return;
 	}
-
 	wsClientGlobal.queue[wsClientGlobal.tail].data = malloc(len);
 	memcpy(wsClientGlobal.queue[wsClientGlobal.tail].data, data, len);
 	wsClientGlobal.queue[wsClientGlobal.tail].len = len;
-
 	wsClientGlobal.tail = next;
-
-	if (wsClientGlobal.wsi) {
-		lws_callback_on_writable(wsClientGlobal.wsi);
-		lws_cancel_service(context);
-	}
 }
 
-static int callbackWs(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len) {
-	switch (reason) {
-		case LWS_CALLBACK_CLIENT_ESTABLISHED: {
-			printf("Connected to server\n");
-			wsClientGlobal.wsi = wsi;
-			size_t len = strlen(name);
-			tim = (uint64_t)time(NULL);
-			unsigned char buff[1 + len + sizeof(tim)];
-			buff[0] = 0x03;
-			memcpy(buff + 1, &tim, sizeof(tim));
-			memcpy(buff + 1 + sizeof(tim), name, len);
-			sendMsg(buff, 1 + sizeof(tim) + len);
-			break;
+static void handleReceive(const unsigned char *in, size_t len) {
+	if (len < 1) return;
+	uint8_t type = in[0];
+	switch (type) {
+		case 1: {
+			if (len < sizeof(playerEvent)) break;
+			playerEvent *evt = (playerEvent *)in;
+			Entity e = { .color = evt->color, .x = evt->x, .y = evt->y };
+			insertEntity(e);
 		}
-
-		case LWS_CALLBACK_CLIENT_RECEIVE: {
-			if (len < 1)
-				break;
-			uint8_t type = *(uint8_t *)in;
-			switch (type) {
-				case 1: {
-					if (len < sizeof(playerEvent))
-						break;
-					playerEvent *evt = (playerEvent *)in;
-					Entity e = { .color = evt->color, .x = evt->x, .y = evt->y };
-					insertEntity(e);
-					// NOTE: it need to go case 0 don't need break;
-				}
-				case 0: {
-					if (len < sizeof(playerEvent))
-						break;
-					playerEvent *evt = (playerEvent *)in;
-					for (int i = 0; i < PLAYER_LEN; i++) {
-						if (player[i] && evt->color == player[i]->color) {
-							player[i]->x = evt->x, player[i]->y = evt->y;
-							break;
-						}
-					}
-					if (evt->color == playerColor())
-						updateCamera(evt->x, evt->y);
-					break;
-				}
-				case 2: {
-					uint32_t color = *(uint32_t *)(in + WS_COLOR_OFF);
-					if (color == playerColor()) {
-						ping = SDL_GetTicks() - sendTime;
-						awaitingPing = 0;
-					}
-				}
-				case 3: {
-					if (len < WS_NAME_OFF + 1)
-						break;
-					uint32_t color = *(uint32_t *)(in + WS_COLOR_OFF);
-					float x = *(float *)(in + WS_X_OFF), y = *(float *)(in + WS_Y_OFF);
-					char *incoming_name = (char *)(in + WS_NAME_OFF);
-					uint64_t rtim = *(uint64_t *)(in + WS_TIME_OFF);
-					incoming_name[len - WS_NAME_OFF] = '\0';
-					Player p = {
-						.x = x,
-						.y = y,
-						.r = 100,
-						.color = color,
-					};
-					strncpy(p.name, incoming_name, sizeof(p.name) - 1);
-					insertPlayer(&p);
-					if (tim == rtim) {
-						initPlayer(x, y, color, incoming_name);
-						SDL_LockMutex(initMutex);
-						initDone = 1;
-						SDL_SignalCondition(initCond);
-						SDL_UnlockMutex(initMutex);
-					}
-					printf("%u\t%f\t%f\t%s\n", color, x, y, incoming_name);
-					break;
-				}
-				case 4: {
-					if (len < 5)
-						break;
-					uint32_t leaveColor = *(uint32_t *)(in + 1);
-					for (int i = 0; i < PLAYER_LEN; i++) {
-						if (player[i] && player[i]->color == leaveColor) {
-							freePlayer(i);
-							break;
-						}
-					}
-					freeEntityByColor(leaveColor);
+		case 0: {
+			if (len < sizeof(playerEvent)) break;
+			playerEvent *evt = (playerEvent *)in;
+			for (int i = 0; i < PLAYER_LEN; i++) {
+				if (player[i] && evt->color == player[i]->color) {
+					player[i]->x = evt->x, player[i]->y = evt->y;
 					break;
 				}
 			}
+			if (evt->color == playerColor())
+				updateCamera(evt->x, evt->y);
 			break;
 		}
-
-		case LWS_CALLBACK_CLIENT_WRITEABLE: {
-			if (wsClientGlobal.head == wsClientGlobal.tail)
-				break;
-
-			wsMsg *msg = &wsClientGlobal.queue[wsClientGlobal.head];
-
-			unsigned char buf[LWS_PRE + msg->len];
-			unsigned char *p = &buf[LWS_PRE];
-
-			memcpy(p, msg->data, msg->len);
-
-			lws_write(wsi, p, msg->len, LWS_WRITE_BINARY);
-
-			free(msg->data);
-			msg->data = NULL;
-
-			wsClientGlobal.head = (wsClientGlobal.head + 1) % MAX_QUEUE;
-
-			if (wsClientGlobal.head != wsClientGlobal.tail)
-				lws_callback_on_writable(wsi);
-
+		case 2: {
+			uint32_t color = *(uint32_t *)(in + WS_COLOR_OFF);
+			if (color == playerColor()) {
+				ping = SDL_GetTicks() - sendTime;
+				awaitingPing = 0;
+			}
 			break;
 		}
-
-		case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
-			printf("Connection error\n");
-			SDL_LockMutex(initMutex);
-			initFailed = 1;
-			SDL_SignalCondition(initCond);
-			SDL_UnlockMutex(initMutex);
+		case 3: {
+			if (len < WS_NAME_OFF + 1) break;
+			uint32_t color = *(uint32_t *)(in + WS_COLOR_OFF);
+			float x = *(float *)(in + WS_X_OFF), y = *(float *)(in + WS_Y_OFF);
+			char namebuf[64];
+			uint64_t rtim = *(uint64_t *)(in + WS_TIME_OFF);
+			size_t name_len = len - WS_NAME_OFF;
+			if (name_len >= sizeof(namebuf)) name_len = sizeof(namebuf) - 1;
+			memcpy(namebuf, in + WS_NAME_OFF, name_len);
+			namebuf[name_len] = '\0';
+			Player p = { .x = x, .y = y, .r = 100, .color = color };
+			strncpy(p.name, namebuf, sizeof(p.name) - 1);
+			insertPlayer(&p);
+			if (tim == rtim) {
+				initPlayer(x, y, color, namebuf);
+				initDone = 1;
+			}
+			printf("%u\t%f\t%f\t%s\n", color, x, y, namebuf);
 			break;
-
-		case LWS_CALLBACK_CLOSED:
-			printf("Connection closed\n");
-			wsClientGlobal.wsi = NULL;
-			SDL_LockMutex(initMutex);
-			if (!initDone)
-				initFailed = 1;
-			SDL_SignalCondition(initCond);
-			SDL_UnlockMutex(initMutex);
+		}
+		case 4: {
+			if (len < 5) break;
+			uint32_t leaveColor = *(uint32_t *)(in + 1);
+			for (int i = 0; i < PLAYER_LEN; i++) {
+				if (player[i] && player[i]->color == leaveColor) {
+					freePlayer(i);
+					break;
+				}
+			}
+			freeEntityByColor(leaveColor);
 			break;
-
-		default:
-			break;
+		}
 	}
-
-	return 0;
 }
 
-static struct lws_protocols protocols[] = {
-	{
-	    "ws",
-	    callbackWs,
-	    0,
-	    512,
-	},
-	{ NULL, NULL, 0, 0 }
-};
+static void sendQueuedMessages(void) {
+	while (wsClientGlobal.head != wsClientGlobal.tail) {
+		wsMsg *msg = &wsClientGlobal.queue[wsClientGlobal.head];
+		size_t sent = 0;
+		CURLcode res = curl_ws_send(curl, msg->data, msg->len, &sent, 0, CURLWS_BINARY);
+		if (res == CURLE_AGAIN) return;
+		if (res != CURLE_OK) { printf("Send error: %s\n", curl_easy_strerror(res)); return; }
+		free(msg->data);
+		msg->data = NULL;
+		wsClientGlobal.head = (wsClientGlobal.head + 1) % MAX_QUEUE;
+	}
+}
+
+void wsPoll(void) {
+	if (!connected || sockfd == CURL_SOCKET_BAD) return;
+	struct pollfd pfd = { .fd = sockfd, .events = POLLIN, .revents = 0 };
+	int ret = poll(&pfd, 1, 0);
+	if (ret > 0 && (pfd.revents & (POLLIN | POLLHUP | POLLERR))) {
+		unsigned char buf[4096];
+		size_t n;
+		const struct curl_ws_frame *meta;
+		CURLcode res = curl_ws_recv(curl, buf, sizeof(buf), &n, &meta);
+		if (res == CURLE_OK) {
+			if (meta->flags & CURLWS_CLOSE) {
+				printf("Server closed connection\n");
+				connected = 0;
+			} else {
+				handleReceive(buf, n);
+			}
+		} else if (res == CURLE_GOT_NOTHING) {
+			printf("Connection closed\n");
+			connected = 0;
+		} else if (res != CURLE_AGAIN) {
+			printf("Receive error: %s\n", curl_easy_strerror(res));
+		}
+	}
+	sendQueuedMessages();
+}
 
 int wsWaitForInit(void) {
-	SDL_LockMutex(initMutex);
-	while (!initDone && !initFailed)
-		SDL_WaitCondition(initCond, initMutex);
-	SDL_UnlockMutex(initMutex);
+	uint64_t start = SDL_GetTicks();
+	while (!initDone && connected) {
+		if (SDL_GetTicks() - start > 5000) {
+			printf("Init timeout\n");
+			return 0;
+		}
+		wsPoll();
+		SDL_Delay(1);
+	}
 	return initDone;
 }
 
 void wsInit(void) {
-	initMutex = SDL_CreateMutex();
-	initCond = SDL_CreateCondition();
-	initDone = 0;
-	initFailed = 0;
+	curl_global_init(CURL_GLOBAL_ALL);
+	curl = curl_easy_init();
+	if (!curl) { printf("Failed to create curl handle\n"); return; }
 
-	struct lws_context_creation_info info;
-	memset(&info, 0, sizeof(info));
+	char ws_url[512];
+	buildWsUrl(ws_url, sizeof(ws_url));
+	curl_easy_setopt(curl, CURLOPT_URL, ws_url);
+	curl_easy_setopt(curl, CURLOPT_CONNECT_ONLY, 2L);
+	printf("Connecting to %s...\n", ws_url);
 
-	info.port = CONTEXT_PORT_NO_LISTEN;
-	info.protocols = protocols;
-
-	context = lws_create_context(&info);
-
-	if (!context) {
-		printf("Failed to create context\n");
-		SDL_LockMutex(initMutex);
-		initFailed = 1;
-		SDL_SignalCondition(initCond);
-		SDL_UnlockMutex(initMutex);
+	CURLcode res = curl_easy_perform(curl);
+	if (res != CURLE_OK) {
+		printf("Connection failed: %s\n", curl_easy_strerror(res));
+		curl_easy_cleanup(curl);
+		curl = NULL;
 		return;
 	}
+	curl_easy_getinfo(curl, CURLINFO_ACTIVESOCKET, &sockfd);
+	connected = 1;
 
-	struct lws_client_connect_info ccinfo = { 0 };
-
-	ccinfo.context = context;
-	ccinfo.address = url;
-	ccinfo.port = atoi(port);
-	ccinfo.path = "/";
-	ccinfo.host = ccinfo.address;
-	ccinfo.origin = ccinfo.address;
-	ccinfo.protocol = protocols[0].name;
-
-	if (!lws_client_connect_via_info(&ccinfo)) {
-		printf("Connection failed\n");
-		SDL_LockMutex(initMutex);
-		initFailed = 1;
-		SDL_SignalCondition(initCond);
-		SDL_UnlockMutex(initMutex);
-		return;
-	}
-
-	printf("Connecting to %s:%s...\n", url, port);
-}
-
-void wsServiceLoop(void) {
-	signal(SIGINT, sigintHandler);
-	wsRunning = 1;
-	wsThread = SDL_CreateThread(wsThreadFunc, "ws", NULL);
+	tim = (uint64_t)time(NULL);
+	size_t name_len = strlen(name);
+	unsigned char buff[1 + sizeof(tim) + name_len];
+	buff[0] = 0x03;
+	memcpy(buff + 1, &tim, sizeof(tim));
+	memcpy(buff + 1 + sizeof(tim), name, name_len);
+	sendMsg(buff, 1 + sizeof(tim) + name_len);
+	printf("Connected to %s\n", ws_url);
 }
 
 void wsStop(void) {
-	if (context)
-		lws_cancel_service(context);
-	wsRunning = 0;
-	SDL_WaitThread(wsThread, NULL);
-	if (context) {
-		lws_context_destroy(context);
-		context = NULL;
+	if (curl) {
+		size_t sent;
+		curl_ws_send(curl, "", 0, &sent, 0, CURLWS_CLOSE);
+		curl_easy_cleanup(curl);
+		curl = NULL;
 	}
-	if (initMutex) {
-		SDL_DestroyMutex(initMutex);
-		initMutex = NULL;
-	}
-	if (initCond) {
-		SDL_DestroyCondition(initCond);
-		initCond = NULL;
-	}
+	curl_global_cleanup();
+	connected = 0;
+	sockfd = CURL_SOCKET_BAD;
 }
