@@ -5,9 +5,10 @@
 const char *url;
 const char *port;
 const char *name;
+const char *ip;
 
 static void usage(char *argv[]) {
-	fprintf(stderr, "usage: %s -u <url> -p <port> -n <name>\n", argv[0]);
+	fprintf(stderr, "usage: %s -u <url> [-i <ip>] [-p <port>] -n <name>\n", argv[0]);
 }
 
 void parseArgs(int argc, char *argv[]) {
@@ -20,6 +21,9 @@ void parseArgs(int argc, char *argv[]) {
 			switch (argv[i][1]) {
 				case 'u':
 					url = argv[++i];
+					break;
+				case 'i':
+					ip = argv[++i];
 					break;
 				case 'p':
 					port = argv[++i];
@@ -37,7 +41,7 @@ void parseArgs(int argc, char *argv[]) {
 		}
 	}
 
-	if (!url || !port || !name) {
+	if (!name || (!url && !(ip && port))) {
 		usage(argv);
 		exit(1);
 	}

@@ -6,5 +6,6 @@ void parseArgs(int argc, char *argv[]);
 extern const char *url;
 extern const char *port;
 extern const char *name;
+extern const char *ip;
 
 #endif
