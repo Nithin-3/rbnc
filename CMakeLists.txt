@@ -8,7 +8,7 @@ pkg_check_modules(SDL3 REQUIRED sdl3)
 pkg_check_modules(CURL REQUIRED libcurl)
 
 add_executable(game
-    game.c world.c player.c camera.c render.c object.c args.c ws.c hud.c
+    game.c world.c player.c camera.c render.c object.c args.c ws.c input.c hud.c
 )
 target_include_directories(game PRIVATE ${SDL3_INCLUDE_DIRS} ${CURL_INCLUDE_DIRS})
 target_link_libraries(game PRIVATE ${SDL3_LIBRARIES} ${CURL_LIBRARIES})
