@@ -18,7 +18,8 @@ void hud_init(SDL_Renderer *renderer) {
 }
 
 void hud_update(SDL_Renderer *renderer, int fps) {
-	if (!hudTex) return;
+	if (!hudTex)
+		return;
 	SDL_SetRenderTarget(renderer, hudTex);
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
 	SDL_RenderClear(renderer);
@@ -36,7 +37,8 @@ void hud_update(SDL_Renderer *renderer, int fps) {
 	y += 10;
 
 	for (int i = 0; i < PLAYER_LEN; i++) {
-		if (player[i] == NULL) continue;
+		if (player[i] == NULL)
+			continue;
 		snprintf(line, sizeof(line), "%s: %.0f, %.0f", player[i]->name, player[i]->x, player[i]->y);
 		SDL_RenderDebugText(renderer, 0, y, line);
 		y += 10;
@@ -46,7 +48,8 @@ void hud_update(SDL_Renderer *renderer, int fps) {
 }
 
 void hud_render(SDL_Renderer *renderer) {
-	if (!hudTex) return;
+	if (!hudTex)
+		return;
 	SDL_FRect dst = { 0, 0, HUD_TEX_W, HUD_TEX_H };
 	SDL_RenderTexture(renderer, hudTex, NULL, &dst);
 }
