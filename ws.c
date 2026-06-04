@@ -82,6 +82,13 @@ static void handleReceive(const unsigned char *in, size_t len) {
 				;
 			if (!player[i])	 // check player availablity
 				break;
+
+			// FIX:
+			// server have to calculate player position and draw state
+			// response type color x y seq
+			// server and game have to share same fixed delta 
+			// update player x y draw
+
 			float dirX = 0, dirY = 0;
 
 			if (evt->dir & DIR_UP) dirY -= 1;

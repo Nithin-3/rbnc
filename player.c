@@ -26,8 +26,24 @@ void initPlayer(float x, float y, uint32_t color, const char name[64]) {
 	pl = 1;
 }
 
-void updatePlayer(uint8_t dir) {  // bit flags: UP=1, DOWN=2, LEFT=4, RIGHT=8
-	if (plIndx < 0 || dir > 15) // 0000 1111 (16) all direction are pressed
+void updatePlayer(uint8_t dir) {     // bit flags: UP=1, DOWN=2, LEFT=4, RIGHT=8
+	if (plIndx < 0 || dir > 15)  // 0000 1111 (15) all direction are pressed
+				     // 0 -> no movement
+				     // 1 -> up
+				     // 2 -> down
+				     // 3 -> up + down
+				     // 4 -> left
+				     // 5 -> left + up
+				     // 6 -> left + down
+				     // 7 -> left + up + down
+				     // 8 -> right
+				     // 9 -> right + up
+				     // 10 -> right + down
+				     // 11 -> right + up + down
+				     // 12 -> right + left
+				     // 13 -> right + left + up
+				     // 14 -> right + left + down
+				     // 15 -> right + left + up + down
 		return;
 
 	playerEvent evt = {
