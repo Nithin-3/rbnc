@@ -4,8 +4,8 @@
 #include "ws.h"
 #include <string.h>
 
-static int plIndx = -1;
-static uint8_t draw = 0;
+static uint8_t draw = 0, plIndx = -1;
+static uint32_t seq = 0;
 
 void initPlayer(float x, float y, uint32_t color, const char name[64]) {
 	static int pl = 0;
@@ -34,8 +34,7 @@ void updatePlayer(uint8_t dir) {  // bit flags: UP=1, DOWN=2, LEFT=4, RIGHT=8
 		.dir = dir,
 		.color = player[plIndx]->color,
 		.type = draw,
-		// FIXME:
-		// send a sequence of this
+		.seq = seq++,
 	};
 	sendMsg(&evt, sizeof(evt));
 }

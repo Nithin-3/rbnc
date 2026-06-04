@@ -9,7 +9,7 @@
 #endif
 typedef struct {
 	uint8_t type, dir;
-	uint32_t color;
+	uint32_t color, seq;
 }
 #if !defined(_MSC_VER)
 __attribute__((packed))
