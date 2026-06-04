@@ -42,7 +42,7 @@ function broadcast(data: Buffer, exclude?: WebSocket) {
 		if (client.readyState === WebSocket.OPEN && client !== exclude) {
 			client.send(data);
 		}
-	}), Math.floor(Math.random() * 1000))
+	}), Math.floor(Math.random() * 100))
 }
 
 function colorToBuf(color: number): Buffer {
