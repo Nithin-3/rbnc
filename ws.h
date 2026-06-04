@@ -8,8 +8,7 @@
 #pragma pack(push, 1)
 #endif
 typedef struct {
-	uint8_t type;
-	float x, y;
+	uint8_t type, dir;
 	uint32_t color;
 }
 #if !defined(_MSC_VER)

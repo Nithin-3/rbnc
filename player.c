@@ -2,9 +2,7 @@
 #include "player.h"
 #include "world.h"
 #include "ws.h"
-#include <math.h>
 #include <string.h>
-#define speed 50
 
 static int plIndx = -1;
 static uint8_t draw = 0;
@@ -28,20 +26,16 @@ void initPlayer(float x, float y, uint32_t color, const char name[64]) {
 	pl = 1;
 }
 
-void updatePlayer(float dirX, float dirY) {
-	if (plIndx < 0 || dirX < -1 || dirX > 1 || dirY < -1 || dirY > 1)
+void updatePlayer(uint8_t dir) {  // bit flags: UP=1, DOWN=2, LEFT=4, RIGHT=8
+	if (plIndx < 0 || dir > 15) // 0000 1111 (16) all direction are pressed
 		return;
-	float len = sqrt(dirX * dirX + dirY * dirY);
-	if (len <= 0)
-		return;
-	float x = player[plIndx]->x + (dirX / len) * speed * dt,
-	      y = player[plIndx]->y + (dirY / len) * speed * dt;
 
 	playerEvent evt = {
-		.x = x,
-		.y = y,
+		.dir = dir,
 		.color = player[plIndx]->color,
 		.type = draw,
+		// FIXME:
+		// send a sequence of this
 	};
 	if (!awaitingPing) {
 		sendTime = SDL_GetTicks();

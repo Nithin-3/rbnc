@@ -3,10 +3,13 @@
 #include "hud.h"
 #include "ws.h"
 #include "object.h"
-#include "player.h"
+#include "input.h"
 #include "render.h"
 #include "world.h"
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_timer.h>
+
+#define FPS 60.0
 
 int main(int argc, char *argv[]) {
 	parseArgs(argc, argv);
@@ -31,45 +34,45 @@ int main(int argc, char *argv[]) {
 	}
 
 	hud_init(renderer);
-	{ int w, h; SDL_GetWindowSize(window, &w, &h); cameraSetWindowSize(w, h); }
+	{
+		int w, h;
+		SDL_GetWindowSize(window, &w, &h);
+		cameraSetWindowSize(w, h);
+	}
 
-	int running = 1;
 	if (!wsWaitForInit()) {
 		SDL_Log("WebSocket init failed");
 		running = 0;
 	}
 
-	Uint64 prev = SDL_GetTicks(), hudPrev = 0;
-	SDL_Event e;
+	Uint64 prev, freq;
+	freq = SDL_GetPerformanceFrequency();
+	prev = SDL_GetPerformanceCounter();  // get nano second cuz it never overflow
+					     // SDL_GetTicks() (ms) overflow after ~45 days in 32 bit pc maybe
+	static double hudAccum, accumulator;
+	hudAccum = accumulator = 0.0;
 	while (running) {
-		Uint64 now = SDL_GetTicks();
-		dt = (now - prev) / 1000.0f;
+		Uint64 now = SDL_GetPerformanceCounter();
+		dt = (double)(now - prev) / freq;
+		accumulator += dt,
+		    hudAccum += dt;
 		prev = now;
 
-		while (SDL_PollEvent(&e)) {
-			if (e.type == SDL_EVENT_QUIT) running = 0;
-			if (e.type == SDL_EVENT_WINDOW_RESIZED)
-				cameraSetWindowSize(e.window.data1, e.window.data2);
-			if (e.type == SDL_EVENT_KEY_DOWN && e.key.scancode == SDL_SCANCODE_SPACE)
-				toggleDraw();
+		// NOTE: runs at exactly fixed(FPS) times per second
+		// not even time gap
+		while (accumulator >= dtFix) {
+			handleInput();
+			accumulator -= dtFix;
+		}
+		if (hudAccum >= 0.1) {	// 10fps
+			hud_update(renderer, dt > 0 ? (int)(1.0 / dt) : 0);
+			hudAccum = 0.0;
 		}
 
-		const bool *keys = SDL_GetKeyboardState(NULL);
-		float dirX = 0, dirY = 0;
-		if (keys[SDL_SCANCODE_W] || keys[SDL_SCANCODE_UP]) dirY -= 1;
-		if (keys[SDL_SCANCODE_S] || keys[SDL_SCANCODE_DOWN]) dirY += 1;
-		if (keys[SDL_SCANCODE_A] || keys[SDL_SCANCODE_LEFT]) dirX -= 1;
-		if (keys[SDL_SCANCODE_D] || keys[SDL_SCANCODE_RIGHT]) dirX += 1;
-		updatePlayer(dirX, dirY);
-		sendPeriodicPing();
-		wsPoll();
-		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+		wsPoll();					 // poll for WebSocket
+		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);	 // set world color
 		SDL_RenderClear(renderer);
 		render(window, renderer);
-		if (now - hudPrev >= 100) {
-			hud_update(renderer, dt > 0 ? (int)(1.0f / dt) : 0);
-			hudPrev = now;
-		}
 		hud_render(renderer);
 		SDL_RenderPresent(renderer);
 	}

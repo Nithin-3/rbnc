@@ -1,17 +1,19 @@
 #include "args.h"
 #include "camera.h"
+#include "input.h"
 #include "player.h"
 #include "world.h"
 #include "ws.h"
 #include <curl/curl.h>
+#include <math.h>
 #include <poll.h>
 #include <SDL3/SDL.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
+#define speed 50
 #define MAX_QUEUE 500
 
 #define WS_TYPE_SIZE sizeof(uint8_t)
@@ -64,26 +66,45 @@ void sendMsg(const void *data, size_t len) {
 }
 
 static void handleReceive(const unsigned char *in, size_t len) {
-	if (len < 1) return;
+	if (len < 1)
+		return;
 	uint8_t type = in[0];
 	switch (type) {
-		case 1: {
-			if (len < sizeof(playerEvent)) break;
-			playerEvent *evt = (playerEvent *)in;
-			Entity e = { .color = evt->color, .x = evt->x, .y = evt->y };
-			insertEntity(e);
-		}
+		case 1:
 		case 0: {
-			if (len < sizeof(playerEvent)) break;
+			if (len < sizeof(playerEvent))
+				break;
 			playerEvent *evt = (playerEvent *)in;
-			for (int i = 0; i < PLAYER_LEN; i++) {
-				if (player[i] && evt->color == player[i]->color) {
-					player[i]->x = evt->x, player[i]->y = evt->y;
-					break;
-				}
+			if (evt->dir == 0)
+				break;
+			uint8_t i;
+			for (i = 0; (i < PLAYER_LEN - 1 && player[i] && evt->color != player[i]->color); i++)
+				;
+			if (!player[i])	 // check player availablity
+				break;
+			float dirX = 0, dirY = 0;
+
+			if (evt->dir & DIR_UP) dirY -= 1;
+			if (evt->dir & DIR_DOWN) dirY += 1;
+			if (evt->dir & DIR_LEFT) dirX -= 1;
+			if (evt->dir & DIR_RIGHT) dirX += 1;
+
+			float len = sqrtf(dirX * dirX + dirY * dirY);
+			if (len <= 0)
+				return;
+			float x = player[i]->x + (dirX / len) * speed * dtFix,
+			      y = player[i]->y + (dirY / len) * speed * dtFix;
+			// TODO: update player x,y
+			// save to rbnc stack
+			// check sequence orderby sequence
+			//
+			player[i]->x = x, player[i]->y = y;
+			if (type) {
+				Entity e = { .color = evt->color, .x = player[i]->x, .y = player[i]->y };
+				insertEntity(e);
 			}
 			if (evt->color == playerColor())
-				updateCamera(evt->x, evt->y);
+				updateCamera(x, y);
 			break;
 		}
 		case 2: {
@@ -95,13 +116,15 @@ static void handleReceive(const unsigned char *in, size_t len) {
 			break;
 		}
 		case 3: {
-			if (len < WS_NAME_OFF + 1) break;
+			if (len < WS_NAME_OFF + 1)
+				break;
 			uint32_t color = *(uint32_t *)(in + WS_COLOR_OFF);
 			float x = *(float *)(in + WS_X_OFF), y = *(float *)(in + WS_Y_OFF);
 			char namebuf[64];
 			uint64_t rtim = *(uint64_t *)(in + WS_TIME_OFF);
 			size_t name_len = len - WS_NAME_OFF;
-			if (name_len >= sizeof(namebuf)) name_len = sizeof(namebuf) - 1;
+			if (name_len >= sizeof(namebuf))
+				name_len = sizeof(namebuf) - 1;
 			memcpy(namebuf, in + WS_NAME_OFF, name_len);
 			namebuf[name_len] = '\0';
 			Player p = { .x = x, .y = y, .r = 100, .color = color };
@@ -115,7 +138,8 @@ static void handleReceive(const unsigned char *in, size_t len) {
 			break;
 		}
 		case 4: {
-			if (len < 5) break;
+			if (len < 5)
+				break;
 			uint32_t leaveColor = *(uint32_t *)(in + 1);
 			for (int i = 0; i < PLAYER_LEN; i++) {
 				if (player[i] && player[i]->color == leaveColor) {
@@ -134,8 +158,12 @@ static void sendQueuedMessages(void) {
 		wsMsg *msg = &wsClientGlobal.queue[wsClientGlobal.head];
 		size_t sent = 0;
 		CURLcode res = curl_ws_send(curl, msg->data, msg->len, &sent, 0, CURLWS_BINARY);
-		if (res == CURLE_AGAIN) return;
-		if (res != CURLE_OK) { printf("Send error: %s\n", curl_easy_strerror(res)); return; }
+		if (res == CURLE_AGAIN)
+			return;
+		if (res != CURLE_OK) {
+			printf("Send error: %s\n", curl_easy_strerror(res));
+			return;
+		}
 		if (sent < msg->len) {
 			memmove(msg->data, (char *)msg->data + sent, msg->len - sent);
 			msg->len -= sent;
@@ -148,7 +176,8 @@ static void sendQueuedMessages(void) {
 }
 
 void wsPoll(void) {
-	if (!connected || sockfd == CURL_SOCKET_BAD) return;
+	if (!connected || sockfd == CURL_SOCKET_BAD)
+		return;
 	struct pollfd pfd = { .fd = sockfd, .events = POLLIN, .revents = 0 };
 	int ret = poll(&pfd, 1, 0);
 	if (ret > 0 && (pfd.revents & (POLLIN | POLLHUP | POLLERR))) {
@@ -189,7 +218,10 @@ int wsWaitForInit(void) {
 void wsInit(void) {
 	curl_global_init(CURL_GLOBAL_ALL);
 	curl = curl_easy_init();
-	if (!curl) { printf("Failed to create curl handle\n"); return; }
+	if (!curl) {
+		printf("Failed to create curl handle\n");
+		return;
+	}
 
 	char ws_url[512];
 	buildWsUrl(ws_url, sizeof(ws_url));
