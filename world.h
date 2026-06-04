@@ -14,13 +14,14 @@ typedef struct Entity {
 typedef struct {
 	char name[64];
 	float x, y;
-	int index, r;
+	uint8_t index, r;
 	uint32_t color;
 } Player;
 
 extern Entity *entityHead[PLAYER_LEN], *entityTail[PLAYER_LEN];
 extern Player *player[PLAYER_LEN];
-extern float dt;
+extern double dt;
+extern const double dtFix;
 extern uint64_t sendTime, ping;
 extern int awaitingPing;
 

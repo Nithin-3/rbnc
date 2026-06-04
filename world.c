@@ -2,9 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define FPS 60
+
 Player *player[PLAYER_LEN];
 Entity *entityHead[PLAYER_LEN] = { 0 }, *entityTail[PLAYER_LEN] = { 0 };
-float dt;
+double dt;
+const double dtFix = 1.0 / FPS;	 // fixed time diffrence
 uint64_t ping, sendTime;
 int awaitingPing;
 
