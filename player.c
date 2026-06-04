@@ -37,10 +37,6 @@ void updatePlayer(uint8_t dir) {  // bit flags: UP=1, DOWN=2, LEFT=4, RIGHT=8
 		// FIXME:
 		// send a sequence of this
 	};
-	if (!awaitingPing) {
-		sendTime = SDL_GetTicks();
-		awaitingPing = 1;
-	}
 	sendMsg(&evt, sizeof(evt));
 }
 
