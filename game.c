@@ -84,4 +84,11 @@ int main(int argc, char *argv[]) {
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 	return 0;
+
+
+	// FIXME: 
+	// turn off vsync 
+	// set fixed target frame rate 120 fps
+	// target all devive render in fixed fps 
+	//
 }

@@ -74,7 +74,18 @@ static void handleReceive(const unsigned char *in, size_t len) {
 		case 0: {
 			if (len < sizeof(playerEvent))
 				break;
-			playerEvent *evt = (playerEvent *)in;
+			playerEvent *evt = (playerEvent *)in; // FIXME: 
+							      // server send { type color x y [seq]}
+							      // travers frame loop from seq%FRAME_LEN to current frame
+							      //
+							      // NOTE:
+							      // when game start sync game time to server
+							      // start time = RTT/2 + server time
+							      // server time start on first player connect 
+							      // current time = (local player seq * FRAME_GAP) + start time
+							      // current frame = (int) current time / FRAME_GAP
+							      //
+							      // EOL update state
 			if (evt->dir == 0)
 				break;
 			uint8_t i;
@@ -117,7 +128,7 @@ static void handleReceive(const unsigned char *in, size_t len) {
 		case 2: {
 			uint32_t color = *(uint32_t *)(in + WS_COLOR_OFF);
 			if (color == playerColor()) {
-				ping = SDL_GetTicks() - sendTime;
+				ping = SDL_GetTicks() - sendTime; // RTT
 				awaitingPing = 0;
 			}
 			break;

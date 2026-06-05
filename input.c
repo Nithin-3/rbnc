@@ -33,4 +33,10 @@ void handleInput() {
 	// FIX:
 	// make a prediction of playes
 	// update to rbnc stack
+	// get current frame set the prediction & set on current state
+	
+	// TODO:
+	// read frames array that contain player state
+	// array would be travers only by incomming seq++ index map -> seq%FRAMES_LEN
+	// EOL current seq 
 }
