@@ -27,7 +27,7 @@ wss.on('connection', (ws: WebSocket) => {
 					Buffer.from([type & 0xff]), // type
 					msg.subarray(2, 6), // color
 					xyBuf, // float x , float y
-					// TODO: send the sequence number
+					msg.subarray(6), // remaining payload (sequence)
 				]));
 				break;
 			}
