@@ -6,7 +6,7 @@ import { findNextPosition } from './tool';
 
 const wss = new WebSocketServer({ port: 3000 });
 
-wss.on('connection', (ws: WebSocket) => {
+wss.on('connection', (ws: WebSocket & { color: string }) => {
 	if (players.size >= PLAYER_MAX) {
 		ws.close(4001, "server full");
 		return;
@@ -45,5 +45,6 @@ wss.on('connection', (ws: WebSocket) => {
 	});
 
 	ws.on('close', () => {
+		players.delete(ws.color)
 	});
 });
