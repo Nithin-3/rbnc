@@ -1,13 +1,12 @@
 #include "args.h"
 #include "camera.h"
-#include "input.h"
 #include "player.h"
 #include "world.h"
 #include "ws.h"
 #include <curl/curl.h>
-#include <math.h>
 #include <poll.h>
 #include <SDL3/SDL.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,7 +19,8 @@
 #define WS_COLOR_OFF (WS_TYPE_SIZE)
 #define WS_X_OFF (WS_COLOR_OFF + sizeof(uint32_t))
 #define WS_Y_OFF (WS_X_OFF + sizeof(float))
-#define WS_TIME_OFF (WS_Y_OFF + sizeof(float))
+#define GAME_TIME_OFF (WS_Y_OFF + sizeof(float))
+#define WS_TIME_OFF (GAME_TIME_OFF + sizeof(uint32_t))
 #define WS_NAME_OFF (WS_TIME_OFF + sizeof(uint64_t))
 
 typedef struct {
@@ -74,22 +74,16 @@ static void handleReceive(const unsigned char *in, size_t len) {
 		case 0: {
 			if (len < sizeof(playerEvent))
 				break;
-			playerEvent *evt = (playerEvent *)in; // FIXME: 
-							      // server send { type color x y [seq]}
-							      // travers frame loop from seq%FRAME_LEN to current frame
-							      //
-							      // NOTE:
-							      // when game start sync game time to server
-							      // start time = RTT/2 + server time
-							      // server time start on first player connect 
-							      // current time = (local player seq * FRAME_GAP) + start time
-							      // current frame = (int) current time / FRAME_GAP
-							      //
-							      // EOL update state
-			if (evt->dir == 0)
-				break;
+			uint32_t color = *(uint32_t *)(in + WS_COLOR_OFF);
+			float x = *(float *)(in + WS_X_OFF), y = *(float *)(in + WS_Y_OFF);
+			uint32_t seq = *(uint32_t *)(in + WS_TIME_OFF);	 // sequence offset
+
+			// FIXME:
+			// server send { type color x y [seq]}
+			// travers frame loop from seq%FRAME_LEN to current frame
+
 			uint8_t i;
-			for (i = 0; (i < PLAYER_LEN - 1 && player[i] && evt->color != player[i]->color); i++)
+			for (i = 0; (i < PLAYER_LEN - 1 && player[i] && color != player[i]->color); i++)
 				;
 			if (!player[i])	 // check player availablity
 				break;
@@ -97,38 +91,22 @@ static void handleReceive(const unsigned char *in, size_t len) {
 			// FIX:
 			// server have to calculate player position and draw state
 			// response type color x y seq
-			// server and game have to share same fixed delta 
+			// server and game have to share same fixed delta
 			// update player x y draw
 
-			float dirX = 0, dirY = 0;
-
-			if (evt->dir & DIR_UP) dirY -= 1;
-			if (evt->dir & DIR_DOWN) dirY += 1;
-			if (evt->dir & DIR_LEFT) dirX -= 1;
-			if (evt->dir & DIR_RIGHT) dirX += 1;
-
-			float len = sqrtf(dirX * dirX + dirY * dirY);
-			if (len <= 0)
-				return;
-			float x = player[i]->x + (dirX / len) * speed * dtFix,
-			      y = player[i]->y + (dirY / len) * speed * dtFix;
-			// TODO: update player x,y
-			// save to rbnc stack
-			// check sequence orderby sequence
-			//
 			player[i]->x = x, player[i]->y = y;
 			if (type) {
-				Entity e = { .color = evt->color, .x = player[i]->x, .y = player[i]->y };
+				Entity e = { .color = color, .x = player[i]->x, .y = player[i]->y };
 				insertEntity(e);
 			}
-			if (evt->color == playerColor())
+			if (color == playerColor())
 				updateCamera(x, y);
 			break;
 		}
 		case 2: {
 			uint32_t color = *(uint32_t *)(in + WS_COLOR_OFF);
 			if (color == playerColor()) {
-				ping = SDL_GetTicks() - sendTime; // RTT
+				ping = SDL_GetTicks() - sendTime;  // RTT
 				awaitingPing = 0;
 			}
 			break;
@@ -136,6 +114,7 @@ static void handleReceive(const unsigned char *in, size_t len) {
 		case 3: {
 			if (len < WS_NAME_OFF + 1)
 				break;
+			// NOTE: incomming data {type(uint8) color(uint32) x(float) y(float) gameTime(uint32) rtime(uint64) name(char*) }
 			uint32_t color = *(uint32_t *)(in + WS_COLOR_OFF);
 			float x = *(float *)(in + WS_X_OFF), y = *(float *)(in + WS_Y_OFF);
 			char namebuf[64];
@@ -149,6 +128,8 @@ static void handleReceive(const unsigned char *in, size_t len) {
 			strncpy(p.name, namebuf, sizeof(p.name) - 1);
 			insertPlayer(&p);
 			if (tim == rtim) {
+				uint32_t rtt = time(NULL) - tim;
+				gameTime = rtt / 2 * *(uint32_t *)(in + GAME_TIME_OFF);		// RTT/2 - server time
 				initPlayer(x, y, color, namebuf);
 				initDone = 1;
 			}

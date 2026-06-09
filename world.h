@@ -24,6 +24,7 @@ extern double dt;
 extern const double dtFix;
 extern uint64_t sendTime, ping;
 extern int awaitingPing;
+extern uint32_t gameTime;
 
 void insertEntity(Entity e);
 void freeEntity(Entity e);

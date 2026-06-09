@@ -10,6 +10,7 @@ double dt;
 const double dtFix = 1.0 / FPS;	 // fixed time diffrence
 uint64_t ping, sendTime;
 int awaitingPing;
+uint32_t gameTime = 0;
 
 void insertEntity(Entity e) {
 	for (int i = 0; i < PLAYER_LEN; i++) {
