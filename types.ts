@@ -5,4 +5,5 @@ export type PlayerInfo = {
 	x: number;
 	y: number;
 	name: string;
+	currentFrame:number;
 };

@@ -1,5 +1,5 @@
 import WebSocket, { WebSocketServer } from 'ws';
-import { insertPlayer, players } from './state';
+import { insertPlayer, players, resetGame } from './state';
 import { broadcast } from './broadcast';
 import { PLAYER_MAX } from './constants';
 import { findNextPosition } from './tool';
@@ -23,6 +23,18 @@ wss.on('connection', (ws: WebSocket & { color: string }) => {
 				xyBuf.writeFloatLE(x, 0);
 				xyBuf.writeFloatLE(y, 4);
 
+				const player = players.get(msg.subarray(2, 6).toString('hex'));
+				const frame = msg.readInt32LE(6);
+
+				if (!player) {
+					break;
+				}
+
+				if (player.currentFrame > frame) {
+					break; // old packet
+				}
+				player.currentFrame = frame;
+
 				broadcast(wss, Buffer.concat([
 					Buffer.from([type & 0xff]), // type
 					msg.subarray(2, 6), // color
@@ -32,6 +44,8 @@ wss.on('connection', (ws: WebSocket & { color: string }) => {
 				break;
 			}
 			case 0x02: {
+				// TODO:
+				// send game time
 				ws.send(msg);
 				break;
 			}
@@ -46,5 +60,8 @@ wss.on('connection', (ws: WebSocket & { color: string }) => {
 
 	ws.on('close', () => {
 		players.delete(ws.color)
+		if (players.size < 1) {
+			resetGame()
+		}
 	});
 });
