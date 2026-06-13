@@ -12,6 +12,7 @@
 #define DIR_RIGHT (1 << 3)	// 1000
 
 extern uint8_t running;
+extern uint32_t seq, currentFrame;
 void handleInput();
 
 #endif

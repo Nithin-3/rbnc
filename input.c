@@ -1,14 +1,16 @@
 
 
 #include "input.h"
+#include "hashMap.h"
 #include "player.h"
+#include "world.h"
 #include "ws.h"
 #include <string.h>
 
 uint8_t running = 1;
 static uint8_t draw = 0;
 static uint32_t color = 0;
-uint32_t seq = 0;
+uint32_t seq = 0, currentFrame = 0;
 
 char msg[msgSize];
 
@@ -18,7 +20,6 @@ void handleInput() {
 		return;
 	}
 	SDL_Event e;
-	Uint64 prev = SDL_GetTicks();
 	while (SDL_PollEvent(&e)) {  //  event driven, fires once when something happens
 		if (e.type == SDL_EVENT_QUIT)
 			running = 0;
@@ -64,17 +65,51 @@ void handleInput() {
 	msg[1] = dir;
 	memcpy(msg + (2 * sizeof(uint8_t)), &color, sizeof(color));
 	memcpy(msg + (2 * sizeof(uint8_t)) + sizeof(uint32_t), &seq, sizeof(seq));
+	seq++;
 
 	sendMsg(&msg, msgSize);
 	sendPeriodicPing();
 
-	// FIX:
-	// make a prediction of playes
-	// update to rbnc stack
-	// get current frame set the prediction & set on current state
+	// dtFixms = dtFix * 1000
+	// how long it run = dtFixms * seq + gametime(ms)
+	// current frame = (how long it run) / dtFixms
+	//
+	// generate state seq --> current frame
+	//
+	// check diff < FRAME_LEN
+	// %FRAME_LEN give date order from to  in real store data index
+	// default start with dir = draw = 0
+	// generate frame for all player
 
-	// TODO:
-	// read frames array that contain player state
-	// array would be travers only by incomming seq++ index map -> seq%FRAMES_LEN
-	// EOL current seq
+	double dtFixms = dtFix * 1000;
+	currentFrame = (dtFixms * seq + gameTime) / dtFixms;
+
+	if (currentFrame - seq > FRAME_LEN)
+		return;
+
+	for (int i = 0; i < PLAYER_LEN; i++) {
+		if (history[i].key == EMPTY_KEY)
+			continue;  // skip empty slots
+
+		HASH *entry = &history[i];
+		for (int f = seq - 1; f < currentFrame; f++) {
+			entry->val[f % FRAME_LEN] = entry->val[(f + 1) % FRAME_LEN];
+		}
+
+		STATE pridicted = entry->val[currentFrame % FRAME_LEN];
+		if (pridicted.draw) {
+			Entity e = { .x = pridicted.x, .y = pridicted.y, .color = entry->key };
+			insertEntity(e);
+		}
+
+		for (int i = 0; i < PLAYER_LEN; i++) { // is wasting the cpu
+			if (player[i] == NULL)
+				continue;
+			Player *p = player[i];
+			if (entry->key == p->color) {
+				p->x = pridicted.x;
+				p->y = pridicted.y;
+			}
+		}
+	}
 }

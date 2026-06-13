@@ -4,7 +4,7 @@ OBJDIR := out
 
 game: $(OBJDIR)/game.o $(OBJDIR)/world.o $(OBJDIR)/player.o \
       $(OBJDIR)/camera.o $(OBJDIR)/render.o $(OBJDIR)/object.o \
-      $(OBJDIR)/args.o $(OBJDIR)/ws.o $(OBJDIR)/input.o $(OBJDIR)/hud.o
+      $(OBJDIR)/args.o $(OBJDIR)/ws.o $(OBJDIR)/input.o $(OBJDIR)/hud.o $(OBJDIR)/hashMap.o
 	$(CC) -o $(OBJDIR)/$@ $^ $(LDFLAGS)
 
 $(OBJDIR)/game.o: game.c world.h render.h player.h camera.h ws.h hud.h | $(OBJDIR)
@@ -35,6 +35,9 @@ $(OBJDIR)/input.o: input.c input.h camera.h player.h | $(OBJDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(OBJDIR)/hud.o: hud.c hud.h world.h | $(OBJDIR)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(OBJDIR)/hashMap.o: hashMap.c hashMap.h world.h | $(OBJDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(OBJDIR):
