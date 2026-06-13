@@ -5,6 +5,7 @@
 #include "player.h"
 #include <SDL3/SDL_events.h>
 
+#define msgSize (2 * sizeof(uint8_t) + 2 * sizeof(uint32_t))
 #define DIR_UP (1)		// 0001
 #define DIR_DOWN (1 << 1)	// 0010
 #define DIR_LEFT (1 << 2) 	// 0100
