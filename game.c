@@ -1,5 +1,6 @@
 #include "args.h"
 #include "camera.h"
+#include "hashMap.h"
 #include "hud.h"
 #include "ws.h"
 #include "object.h"
@@ -14,6 +15,7 @@
 int main(int argc, char *argv[]) {
 	parseArgs(argc, argv);
 	wsInit();
+	historyInit();
 	SDL_Init(SDL_INIT_VIDEO);
 
 	SDL_Window *window = SDL_CreateWindow("rbnc", 0, 0, SDL_WINDOW_FULLSCREEN);

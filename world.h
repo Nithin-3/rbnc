@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #define ENTITY_LEN 1000
-#define PLAYER_LEN 10
+#define PLAYER_LEN 8 // must be power of 2 for bitwise AND hash
 
 typedef struct Entity {
 	float x, y;
