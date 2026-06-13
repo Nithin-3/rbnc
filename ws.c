@@ -1,5 +1,5 @@
 #include "args.h"
-#include "camera.h"
+#include "input.h"
 #include "player.h"
 #include "world.h"
 #include "ws.h"
@@ -72,7 +72,7 @@ static void handleReceive(const unsigned char *in, size_t len) {
 	switch (type) {
 		case 1:
 		case 0: {
-			if (len < sizeof(playerEvent))
+			if (len < msgSize)
 				break;
 			uint32_t color = *(uint32_t *)(in + WS_COLOR_OFF);
 			float x = *(float *)(in + WS_X_OFF), y = *(float *)(in + WS_Y_OFF);
@@ -94,14 +94,14 @@ static void handleReceive(const unsigned char *in, size_t len) {
 			// server and game have to share same fixed delta
 			// update player x y draw
 
-			player[i]->x = x, player[i]->y = y;
-			if (type) {
-				Entity e = { .color = color, .x = player[i]->x, .y = player[i]->y };
-				insertEntity(e);
-			}
-			if (color == playerColor())
-				updateCamera(x, y);
-			break;
+			// player[i]->x = x, player[i]->y = y;
+			// if (type) {
+			// 	Entity e = { .color = color, .x = player[i]->x, .y = player[i]->y };
+			// 	insertEntity(e);
+			// }
+			// if (color == playerColor())
+			// 	updateCamera(x, y);
+			// break;
 		}
 		case 2: {
 			uint32_t color = *(uint32_t *)(in + WS_COLOR_OFF);
