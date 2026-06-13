@@ -1,5 +1,6 @@
 #include "camera.h"
 #include "player.h"
+#include "hashMap.h"
 #include "world.h"
 #include "ws.h"
 #include <string.h>
@@ -23,6 +24,13 @@ void initPlayer(float x, float y, uint32_t color, const char name[64]) {
 	if (plIndx < 0)
 		return;
 	updateCamera(p.x, p.y);
+	STATE state = {
+		.done = 0,
+		.draw = 0,
+		.x = x,
+		.y = y,
+	};
+	hashSet(color, state, 0);
 	pl = 1;
 }
 

@@ -2,6 +2,7 @@
 #define HASHMAP_H
 
 #include <stdint.h>
+#include "world.h"
 
 #define FRAME_LEN 10
 #define EMPTY_KEY 0xFF
@@ -11,15 +12,11 @@ typedef struct {
 	uint8_t draw, done;
 } STATE;
 
-typedef struct {
-	uint8_t key;
-	STATE val[FRAME_LEN];
-} HASH;
-
-extern HASH history[];
+extern uint8_t historyKeys[PLAYER_LEN];
+extern STATE history[PLAYER_LEN][FRAME_LEN];
 
 void historyInit(void);
 int hashSet(uint32_t key, STATE state, int stateIdx);
-HASH *hashGet(uint32_t key);
+int hashGet(uint32_t key);
 
 #endif

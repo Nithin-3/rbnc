@@ -1,4 +1,5 @@
 #include "args.h"
+#include "hashMap.h"
 #include "input.h"
 #include "player.h"
 #include "world.h"
@@ -94,14 +95,26 @@ static void handleReceive(const unsigned char *in, size_t len) {
 			// server and game have to share same fixed delta
 			// update player x y draw
 
-			// player[i]->x = x, player[i]->y = y;
+			int pler = hashGet(color);
+			if (pler < 0){
+				printf("is null  ");
+				break;
+			}
+			history[pler][seq % FRAME_LEN].done = 1;
+			history[pler][seq % FRAME_LEN].draw = type;
+			history[pler][seq % FRAME_LEN].x = x;
+			history[pler][seq % FRAME_LEN].y = y;
+			for (uint32_t f = seq + 1; f < currentFrame; f++) {
+				history[pler][f % FRAME_LEN] = history[pler][(f + 1) % FRAME_LEN];
+			}
+			player[i]->x = history[pler][currentFrame%FRAME_LEN].x, player[i]->y = history[pler][currentFrame%FRAME_LEN].y;
 			// if (type) {
 			// 	Entity e = { .color = color, .x = player[i]->x, .y = player[i]->y };
 			// 	insertEntity(e);
 			// }
-			// if (color == playerColor())
-			// 	updateCamera(x, y);
-			// break;
+			if (color == playerColor())
+				updateCamera(player[i]->x, player[i]->y);
+			break;
 		}
 		case 2: {
 			uint32_t color = *(uint32_t *)(in + WS_COLOR_OFF);
@@ -127,6 +140,8 @@ static void handleReceive(const unsigned char *in, size_t len) {
 			Player p = { .x = x, .y = y, .r = 100, .color = color };
 			strncpy(p.name, namebuf, sizeof(p.name) - 1);
 			insertPlayer(&p);
+			STATE hstate = { .done = 0, .draw = 0, .x = x, .y = y };
+			hashSet(color, hstate, 0);
 			if (tim == rtim) {
 				uint32_t rtt = SDL_GetTicks() - tim;
 				gameTime = rtt / 2 + *(uint32_t *)(in + GAME_TIME_OFF);	 // RTT/2 + server time

@@ -4,11 +4,12 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-HASH history[PLAYER_LEN];
+uint8_t historyKeys[PLAYER_LEN];
+STATE history[PLAYER_LEN][FRAME_LEN];
 
 void historyInit(void) {
 	for (int i = 0; i < PLAYER_LEN; i++) {
-		history[i].key = EMPTY_KEY;
+		historyKeys[i] = EMPTY_KEY;
 	}
 }
 
@@ -23,27 +24,27 @@ int hashSet(uint32_t key, STATE state, int stateIdx) {
 	uint8_t idx = hash(key);
 	for (int i = 0; i < PLAYER_LEN; i++) {
 		uint8_t slot = (idx + i) & (PLAYER_LEN - 1);
-		if (history[slot].key == key) {
-			history[slot].val[stateIdx] = state;
+		if (historyKeys[slot] == key) {
+			history[slot][stateIdx] = state;
 			return -2;
 		}
-		if (history[slot].key == EMPTY_KEY) {
-			history[slot].key = key;
-			history[slot].val[stateIdx] = state;
+		if (historyKeys[slot] == EMPTY_KEY) {
+			historyKeys[slot] = key;
+			history[slot][stateIdx] = state;
 			return 0;
 		}
 	}
 	return -1;
 }
 
-HASH *hashGet(uint32_t key) {
+int hashGet(uint32_t key) {
 	uint8_t idx = hash(key);
 	for (int i = 0; i < PLAYER_LEN; i++) {
 		uint8_t slot = (idx + i) & (PLAYER_LEN - 1);
-		if (history[slot].key == key)
-			return &history[slot];
-		if (history[slot].key == EMPTY_KEY)
-			return NULL;
+		if (historyKeys[slot] == key)
+			return slot;
+		if (historyKeys[slot] == EMPTY_KEY)
+			return -1;
 	}
-	return NULL;
+	return -1;
 }

@@ -88,17 +88,16 @@ void handleInput() {
 		return;
 
 	for (int i = 0; i < PLAYER_LEN; i++) {
-		if (history[i].key == EMPTY_KEY)
+		if (historyKeys[i] == EMPTY_KEY)
 			continue;  // skip empty slots
 
-		HASH *entry = &history[i];
 		for (int f = seq - 1; f < currentFrame; f++) {
-			entry->val[f % FRAME_LEN] = entry->val[(f + 1) % FRAME_LEN];
+			history[i][f % FRAME_LEN] = history[i][(f + 1) % FRAME_LEN];
 		}
 
-		STATE pridicted = entry->val[currentFrame % FRAME_LEN];
+		STATE pridicted = history[i][currentFrame % FRAME_LEN];
 		if (pridicted.draw) {
-			Entity e = { .x = pridicted.x, .y = pridicted.y, .color = entry->key };
+			Entity e = { .x = pridicted.x, .y = pridicted.y, .color = historyKeys[i] };
 			insertEntity(e);
 		}
 
@@ -106,7 +105,7 @@ void handleInput() {
 			if (player[i] == NULL)
 				continue;
 			Player *p = player[i];
-			if (entry->key == p->color) {
+			if (historyKeys[i] == p->color) {
 				p->x = pridicted.x;
 				p->y = pridicted.y;
 			}
