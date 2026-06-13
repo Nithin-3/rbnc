@@ -128,8 +128,8 @@ static void handleReceive(const unsigned char *in, size_t len) {
 			strncpy(p.name, namebuf, sizeof(p.name) - 1);
 			insertPlayer(&p);
 			if (tim == rtim) {
-				uint32_t rtt = time(NULL) - tim;
-				gameTime = rtt / 2 * *(uint32_t *)(in + GAME_TIME_OFF);		// RTT/2 - server time
+				uint32_t rtt = SDL_GetTicks() - tim;
+				gameTime = rtt / 2 + *(uint32_t *)(in + GAME_TIME_OFF);	 // RTT/2 + server time
 				initPlayer(x, y, color, namebuf);
 				initDone = 1;
 			}
@@ -238,12 +238,12 @@ void wsInit(void) {
 	curl_easy_getinfo(curl, CURLINFO_ACTIVESOCKET, &sockfd);
 	connected = 1;
 
-	tim = (uint64_t)time(NULL);
 	size_t name_len = strlen(name);
 	unsigned char buff[1 + sizeof(tim) + name_len];
 	buff[0] = 0x03;
 	memcpy(buff + 1, &tim, sizeof(tim));
 	memcpy(buff + 1 + sizeof(tim), name, name_len);
+	tim = (uint64_t)SDL_GetTicks();
 	sendMsg(buff, 1 + sizeof(tim) + name_len);
 	printf("Connected to %s\n", ws_url);
 }
