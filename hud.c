@@ -1,4 +1,6 @@
 #include "hud.h"
+#include "hashMap.h"
+#include "input.h"
 #include "world.h"
 #include <stdio.h>
 #include <inttypes.h>
@@ -33,6 +35,10 @@ void hud_update(SDL_Renderer *renderer, int fps) {
 	y += 10;
 
 	snprintf(line, sizeof(line), "ping: %" PRIu64 "ms", ping);
+	SDL_RenderDebugText(renderer, 0, y, line);
+	y += 10;
+
+	snprintf(line, sizeof(line), "gameTime: %ds", (int)((dtFix * seq + gameTime * 0.001)));
 	SDL_RenderDebugText(renderer, 0, y, line);
 	y += 10;
 
